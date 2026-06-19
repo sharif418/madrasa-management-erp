@@ -2,7 +2,8 @@
 // GET  /api/notices?type=&audience=&page=1&limit=20
 // POST /api/notices  { title, content, type, audience, expiresAt? }
 import { db } from "@/lib/db";
-import { ok, fail, withSession, auditAfter } from "@/lib/api";
+import { ok, fail, withSession, auditAfter, forbidden } from "@/lib/api";
+import { checkPermission } from "@/lib/permissions";
 
 const TYPES = new Set(["general", "urgent", "holiday", "exam", "event"]);
 const AUDIENCES = new Set(["all", "teachers", "students", "guardians"]);
@@ -52,6 +53,10 @@ type CreateBody = {
 };
 
 export const POST = withSession(async ({ session, req }) => {
+  // RBAC: require notices:create permission
+  const allowed = await checkPermission(session, "notices", "create");
+  if (!allowed) return forbidden("You don't have permission to create notices");
+
   const body = (await req.json().catch(() => ({}))) as CreateBody;
   const title = (body.title || "").trim();
   const content = (body.content || "").trim();

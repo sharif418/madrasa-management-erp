@@ -5,7 +5,7 @@ import * as React from "react";
 import { toast } from "sonner";
 import {
   Users, GraduationCap, Banknote, BookMarked,
-  Download, Loader2, ReceiptText, ExternalLink,
+  Download, Loader2, ReceiptText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -127,6 +127,7 @@ export function ExportCards() {
 function FeeReceiptCard() {
   const { t } = useApp();
   const [collectionId, setCollectionId] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
 
   const onDownload = async () => {
     const id = collectionId.trim();
@@ -134,21 +135,25 @@ function FeeReceiptCard() {
       toast.error(t("importExport.enterCollectionId"));
       return;
     }
-    // Probe the URL first so we can show a friendly error if it 404s.
+    setLoading(true);
     try {
-      const res = await fetch(`/api/export/fee-receipt/${encodeURIComponent(id)}`, {
-        credentials: "include",
-        redirect: "manual",
-      });
+      const res = await fetch(
+        `/api/export/fee-receipt-pdf/${encodeURIComponent(id)}`,
+        { credentials: "include" },
+      );
       if (!res.ok) {
         const j = await res.json().catch(() => null);
         throw new Error(j?.error || t("importExport.receiptError"));
       }
-      // Open the rendered HTML in a new tab so the user can print or save as PDF.
-      window.open(`/api/export/fee-receipt/${encodeURIComponent(id)}`, "_blank", "noopener,noreferrer");
-      toast.success(t("importExport.receiptOpened"));
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      toast.success(t("importExport.receiptReady"));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("importExport.receiptError"));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -161,7 +166,7 @@ function FeeReceiptCard() {
           </div>
           <div>
             <CardTitle className="text-base">{t("importExport.feeReceipt")}</CardTitle>
-            <CardDescription className="text-xs">{t("importExport.receiptOpened")}</CardDescription>
+            <CardDescription className="text-xs">{t("importExport.receiptReady")}</CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -177,10 +182,11 @@ function FeeReceiptCard() {
           />
           <Button
             onClick={onDownload}
+            disabled={loading}
             className="gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md hover:from-emerald-700 hover:to-teal-700"
           >
-            <ExternalLink className="size-4" />
-            {t("importExport.downloadReceipt")}
+            {loading ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
+            {loading ? t("importExport.exporting") : t("importExport.downloadReceipt")}
           </Button>
         </div>
       </CardContent>

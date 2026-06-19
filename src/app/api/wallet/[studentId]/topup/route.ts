@@ -3,12 +3,17 @@
 // paymentMethod from body (cash|bkash|nagad|bank). Audit afterwards.
 // POST /api/wallet/[studentId]/topup  body: { amount, description?, paymentMethod? }
 import { db } from "@/lib/db";
-import { ok, fail, notFound, withSession, auditAfter } from "@/lib/api";
+import { ok, fail, notFound, withSession, auditAfter, forbidden } from "@/lib/api";
+import { checkPermission } from "@/lib/permissions";
 
 const VALID_METHODS = ["cash", "bkash", "nagad", "bank"] as const;
 type Method = (typeof VALID_METHODS)[number];
 
 export const POST = withSession(async ({ session, req, params }) => {
+  // RBAC: require wallet:create permission
+  const allowed = await checkPermission(session, "wallet", "create");
+  if (!allowed) return forbidden("You don't have permission to top up wallets");
+
   const studentId = params?.studentId;
   if (!studentId) return fail("Student id is required");
 

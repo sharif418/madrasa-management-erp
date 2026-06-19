@@ -1,28 +1,60 @@
 "use client";
 // Dashboard stat cards + quick actions
+// (Task 33): animated number counter (count-up on mount) + trend indicator visual.
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   GraduationCap, Users, Wallet, BookOpen, UserPlus,
-  BadgeDollarSign, CalendarCheck, ChevronRight, type LucideIcon,
+  BadgeDollarSign, CalendarCheck, ChevronRight, TrendingUp, type LucideIcon,
 } from "lucide-react";
 import { useApp } from "@/store/app-store";
 import type { ViewKey } from "@/store/app-store";
 
+// Animated count-up: animates from 0 → value over ~700ms with easeOut.
+// Renders a string via the optional formatter (so currency prefix survives).
+function AnimatedNumber({ value, format }: { value: number; format?: (n: number) => string }) {
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    if (value <= 0) {
+      // No animation; rely on initial state (0) or the last rendered value.
+      return;
+    }
+    const duration = 700;
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const elapsed = now - start;
+      const progress = Math.min(1, elapsed / duration);
+      // easeOutCubic for a snappy deceleration
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(value * eased);
+      if (progress < 1) raf = requestAnimationFrame(tick);
+      else setDisplay(value);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value]);
+
+  return <span className="tabular-nums">{format ? format(display) : Math.round(display)}</span>;
+}
+
 type StatProps = {
   label: string;
-  value: string | number;
+  value: number;
+  format?: (n: number) => string;
   sub?: string;
   icon: LucideIcon;
   gradient: string;
+  trend?: { dir: "up" | "down"; value: string } | null;
 };
 
-function StatCard({ label, value, sub, icon: Icon, gradient }: StatProps) {
+function StatCard({ label, value, format, sub, icon: Icon, gradient, trend }: StatProps) {
   return (
     <Card className="group relative h-full overflow-hidden border-0 p-5 shadow-md shadow-black/5 transition-shadow hover:shadow-lg hover:-translate-y-0.5 transition-transform">
       <div className={`absolute inset-0 ${gradient}`} aria-hidden="true" />
-      {/* Decorative diagonal sheen */}
       <div
         className="pointer-events-none absolute -end-8 -top-8 size-24 rounded-full bg-white/10 transition-transform group-hover:scale-125"
         aria-hidden="true"
@@ -31,13 +63,31 @@ function StatCard({ label, value, sub, icon: Icon, gradient }: StatProps) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-sm font-medium text-white/80">{label}</p>
-            <p className="mt-1 text-3xl font-bold text-white tabular-nums">{value}</p>
+            <p className="mt-1 text-3xl font-bold text-white">
+              <AnimatedNumber value={value} format={format} />
+            </p>
           </div>
           <div className="grid size-12 shrink-0 place-items-center rounded-xl bg-white/20 backdrop-blur-sm ring-1 ring-white/30 transition-transform group-hover:scale-105">
             <Icon className="size-6 text-white" />
           </div>
         </div>
-        {sub ? <p className="mt-auto pt-3 text-xs text-white/70">{sub}</p> : null}
+        <div className="mt-auto flex items-center gap-2 pt-3">
+          {trend ? (
+            <span
+              className={`inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-semibold backdrop-blur-sm ${
+                trend.dir === "up" ? "text-emerald-50" : "text-rose-50"
+              }`}
+              title={trend.value}
+            >
+              <TrendingUp
+                className={`size-3 ${trend.dir === "down" ? "rotate-180" : ""}`}
+                aria-hidden
+              />
+              {trend.value}
+            </span>
+          ) : null}
+          {sub ? <p className="text-xs text-white/70">{sub}</p> : null}
+        </div>
       </div>
     </Card>
   );
@@ -77,6 +127,7 @@ export function DashboardStats({
   }
 
   const currencyFmt = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
+  const currencyFormat = (n: number) => `৳${currencyFmt.format(n)}`;
 
   return (
     <div className="space-y-5">
@@ -97,7 +148,8 @@ export function DashboardStats({
         />
         <StatCard
           label={t("dashboard.stats.funds")}
-          value={`৳${currencyFmt.format(data.funds.total)}`}
+          value={data.funds.total}
+          format={currencyFormat}
           sub={t("dashboard.funds.distribution")}
           icon={Wallet}
           gradient="bg-gradient-to-br from-amber-500 to-orange-600"

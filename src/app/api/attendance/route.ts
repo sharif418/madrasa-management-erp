@@ -2,7 +2,8 @@
 // GET  /api/attendance?date=&personType=&status=&page=1&limit=50
 // POST /api/attendance  { date?, entries: [{ personId, personType, status, notes? }] }
 import { db } from "@/lib/db";
-import { ok, fail, withSession, auditAfter } from "@/lib/api";
+import { ok, fail, withSession, auditAfter, forbidden } from "@/lib/api";
+import { checkPermission } from "@/lib/permissions";
 
 const PERSON_TYPES = new Set(["student", "teacher"]);
 const STATUSES = new Set(["present", "absent", "late", "leave"]);
@@ -81,6 +82,10 @@ type Entry = { personId?: string; personType?: string; status?: string; notes?: 
 type Payload = { date?: string; entries?: Entry[] };
 
 export const POST = withSession(async ({ session, req }) => {
+  // RBAC: require attendance:create permission
+  const allowed = await checkPermission(session, "attendance", "create");
+  if (!allowed) return forbidden("You don't have permission to mark attendance");
+
   const body = (await req.json().catch(() => ({}))) as Payload;
   const entries = Array.isArray(body.entries) ? body.entries : [];
   if (entries.length === 0) return fail("No attendance entries provided");

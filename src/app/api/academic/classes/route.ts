@@ -4,7 +4,8 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
-import { ok, fail, unauthorized, auditAfter } from "@/lib/api";
+import { ok, fail, unauthorized, auditAfter, forbidden } from "@/lib/api";
+import { checkPermission } from "@/lib/permissions";
 
 const CURRICULA = ["qawmi", "alia"];
 
@@ -52,6 +53,10 @@ type CreateInput = {
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return unauthorized();
+
+  // RBAC: require academic:create permission
+  const allowed = await checkPermission(session, "academic", "create");
+  if (!allowed) return forbidden("You don't have permission to create classes");
 
   const body = (await req.json().catch(() => ({}))) as CreateInput;
   const name = (body.name || "").trim();

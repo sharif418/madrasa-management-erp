@@ -1,12 +1,13 @@
 "use client";
-// Reports View — header with PDF export + tabbed insights across 5 domains.
+// Reports View — header with real PDF export + tabbed insights across 5 domains.
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useApp } from "@/store/app-store";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { FileBarChart, Printer, AlertTriangle } from "lucide-react";
+import { FileBarChart, FileDown, Loader2, AlertTriangle } from "lucide-react";
 import { ReportsStudentsTab } from "./reports-students-tab";
 import { ReportsFinanceTab } from "./reports-finance-tab";
 import { ReportsHifzTab } from "./reports-hifz-tab";
@@ -17,10 +18,20 @@ import type { ReportsData } from "./reports-types";
 const TABS = ["students", "finance", "hifz", "attendance", "fees"] as const;
 type TabKey = (typeof TABS)[number];
 
+// Maps the active UI tab to the API's reportType identifier.
+const REPORT_TYPE: Record<TabKey, string> = {
+  students: "student-directory",
+  finance: "finance-summary",
+  hifz: "hifz-progress",
+  attendance: "attendance-summary",
+  fees: "fee-ledger",
+};
+
 export function ReportsView() {
-  const { t, dir, tenantName } = useApp();
+  const { t, dir } = useApp();
   const [tab, setTab] = useState<TabKey>("students");
   const [loading, setLoading] = useState(true);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<ReportsData | null>(null);
 
@@ -43,22 +54,37 @@ export function ReportsView() {
     return () => { alive = false; };
   }, [t]);
 
+  const onExportPdf = async () => {
+    setPdfLoading(true);
+    try {
+      const res = await fetch("/api/reports/pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reportType: REPORT_TYPE[tab] }),
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => null);
+        throw new Error(j?.error || `HTTP ${res.status}`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      // Revoke after the new tab has had time to load.
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      toast.success(t("reports.generated"));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("reports.generateFailed"));
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   return (
     <div dir={dir()} className="space-y-6">
-      {/* Print styles: only the .printable area is visible; nav/sidebar hidden */}
-      <style>{`
-        @media print {
-          body * { visibility: hidden !important; }
-          .printable, .printable * { visibility: visible !important; }
-          .printable { position: absolute; inset: 0; padding: 16px; }
-          .no-print { display: none !important; }
-          .printable .chart-grid { grid-template-columns: repeat(2, 1fr) !important; }
-        }
-      `}</style>
-
-      {/* Header — part of printable area */}
-      <div className="printable space-y-6">
-        <div className="flex flex-wrap items-start justify-between gap-3 no-print">
+      {/* Header */}
+      <div className="space-y-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="grid size-11 place-items-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
               <FileBarChart className="size-5" />
@@ -68,19 +94,19 @@ export function ReportsView() {
               <p className="text-sm text-muted-foreground">{t("reports.subtitle")}</p>
             </div>
           </div>
-          <Button onClick={() => window.print()} variant="outline" className="gap-2">
-            <Printer className="size-4" />
-            {t("reports.export")}
+          <Button
+            onClick={onExportPdf}
+            disabled={pdfLoading || loading}
+            variant="outline"
+            className="gap-2"
+          >
+            {pdfLoading ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <FileDown className="size-4" />
+            )}
+            {pdfLoading ? t("reports.generating") : t("reports.export")}
           </Button>
-        </div>
-
-        {/* Print-only header — visible only when printing */}
-        <div className="hidden print:block">
-          <h1 className="text-xl font-bold">{tenantName} — {t("reports.title")}</h1>
-          <p className="text-xs text-muted-foreground">
-            {t("reports.subtitle")} · {new Date().toLocaleString()}
-          </p>
-          <hr className="my-3" />
         </div>
 
         {error ? (
@@ -96,7 +122,7 @@ export function ReportsView() {
           <ReportSkeletons />
         ) : data ? (
           <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
-            <TabsList className="no-print flex w-fit flex-wrap h-auto">
+            <TabsList className="flex w-fit flex-wrap h-auto">
               {TABS.map((k) => (
                 <TabsTrigger key={k} value={k}>{t(`reports.${k}`)}</TabsTrigger>
               ))}

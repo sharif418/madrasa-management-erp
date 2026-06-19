@@ -4,7 +4,8 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
-import { ok, fail, unauthorized, notFound, auditAfter } from "@/lib/api";
+import { ok, fail, unauthorized, notFound, auditAfter, forbidden } from "@/lib/api";
+import { checkPermission } from "@/lib/permissions";
 
 type Input = {
   bookId?: string;
@@ -16,6 +17,10 @@ type Input = {
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return unauthorized();
+
+  // RBAC: require library:create permission (lending is a create op on BookLending)
+  const allowed = await checkPermission(session, "library", "create");
+  if (!allowed) return forbidden("You don't have permission to lend books");
 
   const body = (await req.json().catch(() => ({}))) as Input;
   const bookId = (body.bookId || "").trim();

@@ -3,7 +3,8 @@
 // POST /api/exams  { name, classId?, term?, startDate?, endDate? }
 // All queries scoped by tenantId from session.
 import { db } from "@/lib/db";
-import { ok, fail, withSession, auditAfter } from "@/lib/api";
+import { ok, fail, withSession, auditAfter, forbidden } from "@/lib/api";
+import { checkPermission } from "@/lib/permissions";
 
 const TERMS = new Set(["first", "second", "final"]);
 
@@ -58,6 +59,10 @@ type CreateBody = {
 };
 
 export const POST = withSession(async ({ session, req }) => {
+  // RBAC: require exams:create permission
+  const allowed = await checkPermission(session, "exams", "create");
+  if (!allowed) return forbidden("You don't have permission to manage exams");
+
   const body = (await req.json().catch(() => ({}))) as CreateBody;
   const name = (body.name || "").trim();
   if (!name) return fail("Exam name is required");
