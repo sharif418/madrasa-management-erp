@@ -19,7 +19,18 @@ export type ViewKey =
   | "settings"
   | "audit"
   | "reports"
-  | "import";
+  | "import"
+  | "hostel"
+  | "muhasaba"
+  | "library"
+  | "donors"
+  | "calendar"
+  | "transport"
+  | "health"
+  | "inventory"
+  | "feedback"
+  | "admission"
+  | "alumni";
 
 type AuthScreen = "landing" | "login" | "signup";
 

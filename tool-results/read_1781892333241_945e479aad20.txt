@@ -1,0 +1,967 @@
+     1→// ============================================================
+     2→// Madrasa Management ERP — Multi-Tenant Prisma Schema
+     3→// All domain tables use row-level tenancy via `tenantId`.
+     4→// ============================================================
+     5→
+     6→generator client {
+     7→  provider = "prisma-client-js"
+     8→}
+     9→
+    10→datasource db {
+    11→  provider = "sqlite"
+    12→  url      = env("DATABASE_URL")
+    13→}
+    14→
+    15→// ============================================================
+    16→// 1. TENANT & RBAC SYSTEM
+    17→// ============================================================
+    18→
+    19→model Tenant {
+    20→  id          String   @id @default(cuid())
+    21→  name        String
+    22→  subdomain   String?  @unique
+    23→  logoUrl     String?
+    24→  phone       String?
+    25→  email       String?
+    26→  address     String?
+    27→  currency    String   @default("BDT")
+    28→  language    String   @default("bn")
+    29→  theme       String   @default("emerald")
+    30→  plan        String   @default("trial") // trial, basic, pro, enterprise
+    31→  status      String   @default("active") // active, suspended, cancelled
+    32→  createdAt   DateTime @default(now())
+    33→  updatedAt   DateTime @updatedAt
+    34→
+    35→  users         User[]
+    36→  students      Student[]
+    37→  teachers      Teacher[]
+    38→  classes       Class[]
+    39→  subjects      Subject[]
+    40→  hifzRecords   HifzRecord[]
+    41→  funds         Fund[]
+    42→  transactions  Transaction[]
+    43→  attendance    Attendance[]
+    44→  exams         Exam[]
+    45→  notices       Notice[]
+    46→  auditLogs     AuditLog[]
+    47→  roles         Role[]
+    48→  feeStructures FeeStructure[]
+    49→  feeCollections FeeCollection[]
+    50→  wallets       Wallet[]
+    51→  walletLogs    WalletLog[]
+    52→  // New domain modules
+    53→  featureToggles FeatureToggle[]
+    54→  academicLevels AcademicLevel[]
+    55→  hostels       Hostel[]
+    56→  messMenus     MessMenu[]
+    57→  gatePasses    GatePass[]
+    58→  visitors      Visitor[]
+    59→  muhasabaRecords MuhasabaRecord[]
+    60→  timetableSlots TimetableSlot[]
+    61→  books         Book[]
+    62→  bookLendings  BookLending[]
+    63→  donors        Donor[]
+    64→  donations     Donation[]
+    65→  calendarEvents CalendarEvent[]
+    66→  assets        Asset[]
+    67→  inventoryItems InventoryItem[]
+    68→  feedbacks     Feedback[]
+    69→  healthRecords HealthRecord[]
+    70→  vaccinations  Vaccination[]
+    71→  vehicles      Vehicle[]
+    72→  transportRoutes TransportRoute[]
+    73→  transportAllocations TransportAllocation[]
+    74→  admissionApplications AdmissionApplication[]
+    75→  alumni        Alumni[]
+    76→  notifications Notification[]
+    77→  bedAllocations BedAllocation[]
+    78→}
+    79→
+    80→model User {
+    81→  id        String   @id @default(cuid())
+    82→  tenantId  String
+    83→  phone     String
+    84→  name      String
+    85→  email     String?
+    86→  password  String
+    87→  avatarUrl String?
+    88→  isActive  Boolean  @default(true)
+    89→  lastLogin DateTime?
+    90→  createdAt DateTime @default(now())
+    91→  updatedAt DateTime @updatedAt
+    92→
+    93→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+    94→  roles       UserRole[]
+    95→  hifzRecords HifzRecord[]
+    96→  markedAttendance Attendance[]
+    97→  auditLogs   AuditLog[] @relation("AuditActor")
+    98→
+    99→  @@unique([tenantId, phone])
+   100→}
+   101→
+   102→model Role {
+   103→  id          String   @id @default(cuid())
+   104→  tenantId    String
+   105→  name        String
+   106→  description String?
+   107→  permissions String   @default("{}") // JSON: { module: [actions] }
+   108→  isSystem    Boolean  @default(false)
+   109→  createdAt   DateTime @default(now())
+   110→
+   111→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   112→  users       UserRole[]
+   113→
+   114→  @@unique([tenantId, name])
+   115→}
+   116→
+   117→model UserRole {
+   118→  userId String
+   119→  roleId String
+   120→  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+   121→  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+   122→
+   123→  @@id([userId, roleId])
+   124→}
+   125→
+   126→// ============================================================
+   127→// 2. ACADEMIC SYSTEM
+   128→// ============================================================
+   129→
+   130→model Class {
+   131→  id         String   @id @default(cuid())
+   132→  tenantId   String
+   133→  name       String
+   134→  code       String?
+   135→  curriculum String   @default("qawmi") // qawmi, alia
+   136→  level      Int      @default(1)
+   137→  capacity   Int      @default(40)
+   138→  teacherId  String?
+   139→  academicLevelId String?
+   140→  createdAt  DateTime @default(now())
+   141→
+   142→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   143→  academicLevel AcademicLevel? @relation(fields: [academicLevelId], references: [id], onDelete: SetNull)
+   144→  students    Student[]
+   145→  subjects    Subject[]
+   146→  exams       Exam[]
+   147→  feeStructures FeeStructure[]
+   148→
+   149→  @@unique([tenantId, name])
+   150→}
+   151→
+   152→model Subject {
+   153→  id        String   @id @default(cuid())
+   154→  tenantId  String
+   155→  name      String
+   156→  code      String?
+   157→  type      String   @default("academic") // academic, quranic, arabic, general
+   158→  classId   String?
+   159→  createdAt DateTime @default(now())
+   160→
+   161→  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   162→  class     Class?   @relation(fields: [classId], references: [id], onDelete: SetNull)
+   163→
+   164→  @@unique([tenantId, name])
+   165→}
+   166→
+   167→model Student {
+   168→  id              String   @id @default(cuid())
+   169→  tenantId        String
+   170→  rollNo          String?
+   171→  name            String
+   172→  nameArabic      String?
+   173→  gender          String   @default("male") // male, female
+   174→  dob             DateTime?
+   175→  phone           String?
+   176→  guardianName    String?
+   177→  guardianPhone   String?
+   178→  guardianRelation String? // father, mother, uncle, other
+   179→  address         String?
+   180→  bloodGroup      String?
+   181→  photoUrl        String?
+   182→  classId         String?
+   183→  isHafiz         Boolean  @default(false)
+   184→  isZakatEligible Boolean  @default(false)
+   185→  isActive        Boolean  @default(true)
+   186→  admissionDate   DateTime @default(now())
+   187→  createdAt       DateTime @default(now())
+   188→  updatedAt       DateTime @updatedAt
+   189→
+   190→  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   191→  class           Class?   @relation(fields: [classId], references: [id], onDelete: SetNull)
+   192→  hifzRecords     HifzRecord[]
+   193→  wallet          Wallet?
+   194→  feeCollections  FeeCollection[]
+   195→  examResults     ExamResult[]
+   196→  transactions    Transaction[]
+   197→  // New relations
+   198→  bedAllocations  BedAllocation[]
+   199→  gatePasses      GatePass[]
+   200→  muhasabaRecords MuhasabaRecord[]
+   201→  bookLendings    BookLending[]
+   202→  healthRecords   HealthRecord[]
+   203→  vaccinations    Vaccination[]
+   204→  transportAllocations TransportAllocation[]
+   205→
+   206→  @@unique([tenantId, rollNo])
+   207→}
+   208→
+   209→model Teacher {
+   210→  id          String   @id @default(cuid())
+   211→  tenantId    String
+   212→  name        String
+   213→  nameArabic  String?
+   214→  phone       String?
+   215→  email       String?
+   216→  gender      String   @default("male")
+   217→  designation String? // ustadh, mudarris, shaykh
+   218→  specialization String? // hifz, fiqh, tafsir, arabic
+   219→  salary      Float    @default(0)
+   220→  joinDate    DateTime @default(now())
+   221→  isActive    Boolean  @default(true)
+   222→  address     String?
+   223→  photoUrl    String?
+   224→  createdAt   DateTime @default(now())
+   225→  updatedAt   DateTime @updatedAt
+   226→
+   227→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   228→}
+   229→
+   230→// ============================================================
+   231→// 3. HIFZ TRACKING ENGINE
+   232→// ============================================================
+   233→
+   234→model HifzRecord {
+   235→  id            String   @id @default(cuid())
+   236→  tenantId      String
+   237→  studentId     String
+   238→  teacherId     String?
+   239→  type          String   // sabak, sabaq_para, dhor
+   240→  paraNumber    Int
+   241→  surahName     String?
+   242→  ayahFrom      Int?
+   243→  ayahTo        Int?
+   244→  qualityRating Int?     // 1-5
+   245→  mistakesCount Int      @default(0)
+   246→  notes         String?
+   247→  status        String   @default("completed") // completed, revision, weak
+   248→  recordedAt    DateTime @default(now())
+   249→
+   250→  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   251→  student       Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+   252→  teacher       User?    @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+   253→}
+   254→
+   255→// ============================================================
+   256→// 4. SHARIAH-COMPLIANT FINANCE
+   257→// ============================================================
+   258→
+   259→model Fund {
+   260→  id          String   @id @default(cuid())
+   261→  tenantId    String
+   262→  name        String
+   263→  type        String   // general, lillah, waqf, zakat, sadaqah
+   264→  balance     Float    @default(0)
+   265→  description String?
+   266→  createdAt   DateTime @default(now())
+   267→
+   268→  tenant      Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   269→  transactions Transaction[]
+   270→
+   271→  @@unique([tenantId, name])
+   272→}
+   273→
+   274→model Transaction {
+   275→  id            String   @id @default(cuid())
+   276→  tenantId      String
+   277→  fundId        String
+   278→  amount        Float
+   279→  type          String   // income, expense, transfer
+   280→  category      String?  // donation, fee, salary, maintenance, etc.
+   281→  description   String?
+   282→  relatedUserId String?
+   283→  relatedStudentId String?
+   284→  tamlikProof   String?  // JSON proof for zakat tamlik
+   285→  paymentMethod String?  // cash, bkash, nagad, bank, wallet
+   286→  date          DateTime @default(now())
+   287→  createdAt     DateTime @default(now())
+   288→
+   289→  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   290→  fund          Fund     @relation(fields: [fundId], references: [id], onDelete: Cascade)
+   291→  student       Student? @relation(fields: [relatedStudentId], references: [id], onDelete: SetNull)
+   292→}
+   293→
+   294→model Wallet {
+   295→  id        String   @id @default(cuid())
+   296→  studentId String   @unique
+   297→  tenantId  String
+   298→  balance   Float    @default(0)
+   299→  createdAt DateTime @default(now())
+   300→  updatedAt DateTime @updatedAt
+   301→
+   302→  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   303→  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+   304→  logs      WalletLog[]
+   305→}
+   306→
+   307→model WalletLog {
+   308→  id          String   @id @default(cuid())
+   309→  walletId    String
+   310→  tenantId    String
+   311→  amount      Float
+   312→  trxType     String   // top_up, canteen, laundry, fee_deduction
+   313→  description String?
+   314→  createdAt   DateTime @default(now())
+   315→
+   316→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   317→  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+   318→}
+   319→
+   320→model FeeStructure {
+   321→  id        String   @id @default(cuid())
+   322→  tenantId  String
+   323→  name      String
+   324→  classId   String?
+   325→  amount    Float
+   326→  type      String   // tuition, admission, exam, hostel, transport
+   327→  frequency String   @default("monthly") // monthly, quarterly, yearly, one_time
+   328→  createdAt DateTime @default(now())
+   329→
+   330→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   331→  class       Class?   @relation(fields: [classId], references: [id], onDelete: SetNull)
+   332→  collections FeeCollection[]
+   333→}
+   334→
+   335→model FeeCollection {
+   336→  id         String   @id @default(cuid())
+   337→  tenantId   String
+   338→  studentId  String
+   339→  feeStructureId String?
+   340→  amount     Float
+   341→  paidAmount Float
+   342→  dueDate    DateTime?
+   343→  paidDate   DateTime?
+   344→  status     String   @default("pending") // pending, partial, paid, overdue
+   345→  method     String?  // cash, bkash, nagad, bank
+   346→  notes      String?
+   347→  createdAt  DateTime @default(now())
+   348→
+   349→  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   350→  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+   351→  feeStructure FeeStructure? @relation(fields: [feeStructureId], references: [id], onDelete: SetNull)
+   352→}
+   353→
+   354→// ============================================================
+   355→// 5. ATTENDANCE & EXAMS
+   356→// ============================================================
+   357→
+   358→model Attendance {
+   359→  id         String   @id @default(cuid())
+   360→  tenantId   String
+   361→  personId   String
+   362→  personType String  // student, teacher
+   363→  date       DateTime
+   364→  status     String   // present, absent, late, leave
+   365→  notes      String?
+   366→  markedBy   String?
+   367→  createdAt  DateTime @default(now())
+   368→
+   369→  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   370→  marker    User?    @relation(fields: [markedBy], references: [id], onDelete: SetNull)
+   371→
+   372→  @@unique([tenantId, personId, personType, date])
+   373→}
+   374→
+   375→model Exam {
+   376→  id         String   @id @default(cuid())
+   377→  tenantId   String
+   378→  name       String
+   379→  classId    String?
+   380→  term       String?  // first, second, final
+   381→  startDate  DateTime?
+   382→  endDate    DateTime?
+   383→  createdAt  DateTime @default(now())
+   384→
+   385→  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   386→  class      Class?   @relation(fields: [classId], references: [id], onDelete: SetNull)
+   387→  results    ExamResult[]
+   388→}
+   389→
+   390→model ExamResult {
+   391→  id        String   @id @default(cuid())
+   392→  examId    String
+   393→  studentId String
+   394→  subject   String
+   395→  marks     Float
+   396→  total     Float    @default(100)
+   397→  grade     String?
+   398→  remarks   String?
+   399→
+   400→  exam      Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+   401→  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+   402→}
+   403→
+   404→// ============================================================
+   405→// 6. NOTICES & AUDIT
+   406→// ============================================================
+   407→
+   408→model Notice {
+   409→  id          String   @id @default(cuid())
+   410→  tenantId    String
+   411→  title       String
+   412→  content     String
+   413→  type        String   @default("general") // general, urgent, holiday, exam, event
+   414→  audience    String   @default("all") // all, teachers, students, guardians
+   415→  publishedAt DateTime @default(now())
+   416→  expiresAt   DateTime?
+   417→  createdAt   DateTime @default(now())
+   418→
+   419→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   420→}
+   421→
+   422→model AuditLog {
+   423→  id         String   @id @default(cuid())
+   424→  tenantId   String
+   425→  actorId    String?
+   426→  action     String   // create, update, delete, login
+   427→  module     String
+   428→  entityId   String?
+   429→  entityName String?
+   430→  details    String?  // JSON snapshot
+   431→  ip         String?
+   432→  createdAt  DateTime @default(now())
+   433→
+   434→  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   435→  actor      User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+   436→}
+   437→
+   438→// ============================================================
+   439→// 7. FEATURE TOGGLES & ACADEMIC LEVELS
+   440→// ============================================================
+   441→
+   442→model FeatureToggle {
+   443→  id        String   @id @default(cuid())
+   444→  tenantId  String
+   445→  module    String   // hostel, transport, hifz, finance, hr, mess, muhasaba, website, library, donors, calendar, health, inventory, feedback, admission, alumni
+   446→  enabled   Boolean  @default(true)
+   447→  createdAt DateTime @default(now())
+   448→  updatedAt DateTime @updatedAt
+   449→
+   450→  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   451→
+   452→  @@unique([tenantId, module])
+   453→}
+   454→
+   455→model AcademicLevel {
+   456→  id            String   @id @default(cuid())
+   457→  tenantId      String
+   458→  name          String   // Ibtedayi / Mutawassitah / Sanawiyyah / Fazilat / Dawra-e-Hadith (Qawmi)
+   459→  nameArabic    String?
+   460→  order         Int
+   461→  durationYears Int      @default(1)
+   462→  description   String?
+   463→  createdAt     DateTime @default(now())
+   464→
+   465→  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   466→  classes       Class[]
+   467→}
+   468→
+   469→// ============================================================
+   470→// 8. RESIDENTIAL — HOSTEL, MESS, GATE PASS, VISITOR
+   471→// ============================================================
+   472→
+   473→model Hostel {
+   474→  id          String   @id @default(cuid())
+   475→  tenantId    String
+   476→  name        String
+   477→  wardenTeacherId String?
+   478→  createdAt   DateTime @default(now())
+   479→
+   480→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   481→  blocks      HostelBlock[]
+   482→}
+   483→
+   484→model HostelBlock {
+   485→  id        String   @id @default(cuid())
+   486→  hostelId  String
+   487→  name      String
+   488→  createdAt DateTime @default(now())
+   489→
+   490→  hostel    Hostel   @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+   491→  floors    HostelFloor[]
+   492→}
+   493→
+   494→model HostelFloor {
+   495→  id        String   @id @default(cuid())
+   496→  blockId   String
+   497→  level     Int
+   498→  createdAt DateTime @default(now())
+   499→
+   500→  block     HostelBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+   501→  rooms     HostelRoom[]
+   502→}
+   503→
+   504→model HostelRoom {
+   505→  id          String   @id @default(cuid())
+   506→  floorId     String
+   507→  roomNumber  String
+   508→  capacity    Int      @default(4)
+   509→  needsRepair Boolean  @default(false)
+   510→  createdAt   DateTime @default(now())
+   511→
+   512→  floor       HostelFloor @relation(fields: [floorId], references: [id], onDelete: Cascade)
+   513→  beds        Bed[]
+   514→}
+   515→
+   516→model Bed {
+   517→  id         String   @id @default(cuid())
+   518→  roomId     String
+   519→  bedNumber  String
+   520→  status     String   @default("vacant") // vacant, occupied, maintenance
+   521→  createdAt  DateTime @default(now())
+   522→
+   523→  room       HostelRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+   524→  allocations BedAllocation[]
+   525→}
+   526→
+   527→model BedAllocation {
+   528→  id          String   @id @default(cuid())
+   529→  bedId       String
+   530→  studentId   String
+   531→  tenantId    String
+   532→  allocatedAt DateTime @default(now())
+   533→  releasedAt  DateTime?
+   534→
+   535→  bed         Bed      @relation(fields: [bedId], references: [id], onDelete: Cascade)
+   536→  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+   537→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   538→}
+   539→
+   540→model MessMenu {
+   541→  id          String   @id @default(cuid())
+   542→  tenantId    String
+   543→  date        DateTime
+   544→  mealType    String   // breakfast, lunch, dinner, snacks
+   545→  items       String   // JSON string of menu items
+   546→  headcount   Int      @default(0)
+   547→  createdAt   DateTime @default(now())
+   548→
+   549→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   550→}
+   551→
+   552→model GatePass {
+   553→  id          String   @id @default(cuid())
+   554→  tenantId    String
+   555→  studentId   String
+   556→  reason      String
+   557→  outTime     DateTime @default(now())
+   558→  inTime      DateTime?
+   559→  status      String   @default("approved") // pending, approved, rejected, used
+   560→  approvedBy  String?
+   561→  guardianNotified Boolean @default(false)
+   562→  createdAt   DateTime @default(now())
+   563→
+   564→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   565→  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+   566→}
+   567→
+   568→model Visitor {
+   569→  id          String   @id @default(cuid())
+   570→  tenantId    String
+   571→  name        String
+   572→  phone       String?
+   573→  purpose     String
+   574→  visitingStudentId String?
+   575→  checkIn     DateTime @default(now())
+   576→  checkOut    DateTime?
+   577→  createdAt   DateTime @default(now())
+   578→
+   579→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   580→}
+   581→
+   582→// ============================================================
+   583→// 9. MUHASABA — TARBIYAH TRACKER
+   584→// ============================================================
+   585→
+   586→model MuhasabaRecord {
+   587→  id          String   @id @default(cuid())
+   588→  tenantId    String
+   589→  studentId   String
+   590→  date        DateTime @default(now())
+   591→  fajr        String   @default("pending") // jamaat, alone, qadha, pending
+   592→  dhuhr       String   @default("pending")
+   593→  asr         String   @default("pending")
+   594→  maghrib     String   @default("pending")
+   595→  isha        String   @default("pending")
+   596→  tahajjud    Boolean  @default(false)
+   597→  quranRecitation Boolean @default(false)
+   598→  morningAdhkar Boolean @default(false)
+   599→  eveningAdhkar Boolean @default(false)
+   600→  sadaqah     Boolean  @default(false)
+   601→  akhlaqRating Int     @default(3) // 1-5 by class teacher
+   602→  teacherNote String?
+   603→  createdAt   DateTime @default(now())
+   604→
+   605→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   606→  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+   607→}
+   608→
+   609→// ============================================================
+   610→// 10. TIMETABLE
+   611→// ============================================================
+   612→
+   613→model TimetableSlot {
+   614→  id          String   @id @default(cuid())
+   615→  tenantId    String
+   616→  classId     String?
+   617→  day         String   // sat, sun, mon, tue, wed, thu, fri
+   618→  startTime   String
+   619→  endTime     String
+   620→  subject     String
+   621→  teacherId   String?
+   622→  room        String?
+   623→  createdAt   DateTime @default(now())
+   624→
+   625→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   626→}
+   627→
+   628→// ============================================================
+   629→// 11. LIBRARY & BOOK BANK
+   630→// ============================================================
+   631→
+   632→model Book {
+   633→  id          String   @id @default(cuid())
+   634→  tenantId    String
+   635→  title       String
+   636→  titleArabic String?
+   637→  author      String?
+   638→  category    String   @default("other") // fiqh, tafsir, hadith, nahw, sarf, literature, other
+   639→  isbn        String?
+   640→  totalCopies Int      @default(1)
+   641→  availableCopies Int  @default(1)
+   642→  shelfLocation String?
+   643→  description String?
+   644→  createdAt   DateTime @default(now())
+   645→
+   646→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   647→  lendings    BookLending[]
+   648→}
+   649→
+   650→model BookLending {
+   651→  id          String   @id @default(cuid())
+   652→  tenantId    String
+   653→  bookId      String
+   654→  studentId   String?
+   655→  borrowerName String
+   656→  borrowedAt  DateTime @default(now())
+   657→  dueDate     DateTime
+   658→  returnedAt  DateTime?
+   659→  status      String   @default("borrowed") // borrowed, returned, overdue
+   660→  fine        Float    @default(0)
+   661→  createdAt   DateTime @default(now())
+   662→
+   663→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   664→  book        Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+   665→  student     Student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+   666→}
+   667→
+   668→// ============================================================
+   669→// 12. DONOR MANAGEMENT
+   670→// ============================================================
+   671→
+   672→model Donor {
+   673→  id          String   @id @default(cuid())
+   674→  tenantId    String
+   675→  name        String
+   676→  nameArabic  String?
+   677→  email       String?
+   678→  phone       String?
+   679→  address     String?
+   680→  country     String   @default("Bangladesh")
+   681→  type        String   @default("individual") // individual, organization, recurring
+   682→  preferredFund String? // zakat, lillah, waqf, sadaqah, general
+   683→  totalContributed Float @default(0)
+   684→  contributionCount Int  @default(0)
+   685→  isRecurring Boolean  @default(false)
+   686→  firstDonation DateTime?
+   687→  lastDonation  DateTime?
+   688→  notes       String?
+   689→  createdAt   DateTime @default(now())
+   690→
+   691→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   692→  donations   Donation[]
+   693→}
+   694→
+   695→model Donation {
+   696→  id          String   @id @default(cuid())
+   697→  tenantId    String
+   698→  donorId     String?
+   699→  donorName   String
+   700→  amount      Float
+   701→  fund        String   // zakat, lillah, waqf, sadaqah, general
+   702→  purpose     String?
+   703→  paymentMethod String? // cash, bkash, nagad, bank, card, sslcommerz
+   704→  reference   String?
+   705→  isRecurring Boolean  @default(false)
+   706→  status      String   @default("confirmed") // pending, confirmed, failed
+   707→  date        DateTime @default(now())
+   708→  createdAt   DateTime @default(now())
+   709→
+   710→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   711→  donor       Donor?   @relation(fields: [donorId], references: [id], onDelete: SetNull)
+   712→}
+   713→
+   714→// ============================================================
+   715→// 13. EVENTS & CALENDAR
+   716→// ============================================================
+   717→
+   718→model CalendarEvent {
+   719→  id          String   @id @default(cuid())
+   720→  tenantId    String
+   721→  title       String
+   722→  titleArabic String?
+   723→  description String?
+   724→  type        String   @default("event") // exam, holiday, islamic, meeting, admission, result, event
+   725→  startDate   DateTime
+   726→  endDate     DateTime?
+   727→  isAllDay    Boolean  @default(true)
+   728→  location    String?
+   729→  audience    String   @default("all") // all, staff, parents, students
+   730→  isHighlighted Boolean @default(false)
+   731→  createdAt   DateTime @default(now())
+   732→
+   733→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   734→}
+   735→
+   736→// ============================================================
+   737→// 14. INVENTORY & ASSET MANAGEMENT
+   738→// ============================================================
+   739→
+   740→model Asset {
+   741→  id          String   @id @default(cuid())
+   742→  tenantId    String
+   743→  name        String
+   744→  category    String   @default("other") // furniture, equipment, building, vehicle, kitchen, it, other
+   745→  serialNumber String?
+   746→  purchaseDate DateTime?
+   747→  purchaseCost Float   @default(0)
+   748→  currentValue Float  @default(0)
+   749→  condition   String   @default("good") // excellent, good, fair, poor, damaged
+   750→  location    String?
+   751→  assignedTo  String?
+   752→  status      String   @default("in_use") // in_use, stored, under_repair, disposed
+   753→  notes       String?
+   754→  createdAt   DateTime @default(now())
+   755→
+   756→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   757→}
+   758→
+   759→model InventoryItem {
+   760→  id          String   @id @default(cuid())
+   761→  tenantId    String
+   762→  name        String
+   763→  category    String   @default("other") // stationery, kitchen, cleaning, medical, other
+   764→  unit        String   @default("pcs")
+   765→  quantity    Int      @default(0)
+   766→  minStock    Int      @default(10)
+   767→  unitCost    Float    @default(0)
+   768→  lastRestock DateTime?
+   769→  createdAt   DateTime @default(now())
+   770→
+   771→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   772→}
+   773→
+   774→// ============================================================
+   775→// 15. FEEDBACK & COMPLAINTS
+   776→// ============================================================
+   777→
+   778→model Feedback {
+   779→  id          String   @id @default(cuid())
+   780→  tenantId    String
+   781→  type        String   @default("complaint") // complaint, suggestion, appreciation, grievance
+   782→  category    String   @default("other") // academic, residential, mess, transport, finance, staff, other
+   783→  subject     String
+   784→  description String
+   785→  submittedBy String
+   786→  submitterRole String @default("parent") // parent, student, staff, visitor
+   787→  contact     String?
+   788→  priority    String   @default("medium") // low, medium, high, urgent
+   789→  status      String   @default("open") // open, in_review, resolved, closed
+   790→  assignedTo  String?
+   791→  resolution  String?
+   792→  rating      Int?
+   793→  submittedAt DateTime @default(now())
+   794→  resolvedAt  DateTime?
+   795→  createdAt   DateTime @default(now())
+   796→
+   797→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   798→}
+   799→
+   800→// ============================================================
+   801→// 16. HEALTH & WELLNESS
+   802→// ============================================================
+   803→
+   804→model HealthRecord {
+   805→  id          String   @id @default(cuid())
+   806→  tenantId    String
+   807→  studentId   String
+   808→  recordType  String   @default("checkup") // checkup, vaccination, illness, allergy, injury, dental, vision
+   809→  date        DateTime @default(now())
+   810→  description String
+   811→  diagnosis   String?
+   812→  treatment   String?
+   813→  medication  String?
+   814→  doctorName  String?
+   815→  followUpDate DateTime?
+   816→  severity    String   @default("mild") // mild, moderate, severe
+   817→  status      String   @default("treated") // ongoing, treated, referred
+   818→  createdAt   DateTime @default(now())
+   819→
+   820→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   821→  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+   822→}
+   823→
+   824→model Vaccination {
+   825→  id          String   @id @default(cuid())
+   826→  tenantId    String
+   827→  studentId   String
+   828→  vaccineName String
+   829→  doseNumber  Int      @default(1)
+   830→  dateAdministered DateTime @default(now())
+   831→  nextDue     DateTime?
+   832→  administeredBy String?
+   833→  batchNumber String?
+   834→  createdAt   DateTime @default(now())
+   835→
+   836→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   837→  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+   838→}
+   839→
+   840→// ============================================================
+   841→// 17. TRANSPORT & VEHICLE ROUTING
+   842→// ============================================================
+   843→
+   844→model Vehicle {
+   845→  id          String   @id @default(cuid())
+   846→  tenantId    String
+   847→  registration String  @unique
+   848→  type        String   @default("bus") // bus, minibus, microbus
+   849→  capacity    Int
+   850→  driverName  String
+   851→  driverPhone String?
+   852→  routeName   String?
+   853→  isActive    Boolean  @default(true)
+   854→  createdAt   DateTime @default(now())
+   855→
+   856→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   857→  allocations TransportAllocation[]
+   858→}
+   859→
+   860→model TransportRoute {
+   861→  id          String   @id @default(cuid())
+   862→  tenantId    String
+   863→  name        String
+   864→  startPoint  String
+   865→  endPoint    String
+   866→  distanceKm  Float
+   867→  monthlyFee  Float    @default(0)
+   868→  stops       String   // JSON array of pickup points
+   869→  createdAt   DateTime @default(now())
+   870→
+   871→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   872→  allocations TransportAllocation[]
+   873→}
+   874→
+   875→model TransportAllocation {
+   876→  id          String   @id @default(cuid())
+   877→  tenantId    String
+   878→  studentId   String
+   879→  vehicleId   String
+   880→  routeId     String
+   881→  pickupPoint String?
+   882→  allocatedAt DateTime @default(now())
+   883→  isActive    Boolean  @default(true)
+   884→
+   885→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   886→  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+   887→  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+   888→  route       TransportRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
+   889→}
+   890→
+   891→// ============================================================
+   892→// 18. ADMISSION PORTAL
+   893→// ============================================================
+   894→
+   895→model AdmissionApplication {
+   896→  id          String   @id @default(cuid())
+   897→  tenantId    String
+   898→  applicantName String
+   899→  applicantNameArabic String?
+   900→  fatherName  String
+   901→  motherName  String?
+   902→  dateOfBirth DateTime?
+   903→  gender      String   @default("male")
+   904→  guardianPhone String
+   905→  guardianEmail String?
+   906→  address     String?
+   907→  previousInstitution String?
+   908→  appliedLevel String?
+   909→  appliedClass String?
+   910→  hifzBackground String?
+   911→  applicationDate DateTime @default(now())
+   912→  status      String   @default("pending") // pending, reviewing, approved, rejected, enrolled
+   913→  reviewedBy  String?
+   914→  reviewNotes String?
+   915→  interviewDate DateTime?
+   916→  documents   String?  // JSON array
+   917→  createdAt   DateTime @default(now())
+   918→  updatedAt   DateTime @updatedAt
+   919→
+   920→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   921→}
+   922→
+   923→// ============================================================
+   924→// 19. ALUMNI & GRADUATE TRACKING
+   925→// ============================================================
+   926→
+   927→model Alumni {
+   928→  id          String   @id @default(cuid())
+   929→  tenantId    String
+   930→  name        String
+   931→  nameArabic  String?
+   932→  graduationYear Int
+   933→  graduatedLevel String?
+   934→  rollNumber  String?
+   935→  currentOccupation String?
+   936→  organization String?
+   937→  currentCity String?
+   938→  currentCountry String @default("Bangladesh")
+   939→  phone       String?
+   940→  email       String?
+   941→  linkedin    String?
+   942→  achievements String?
+   943→  isActive    Boolean  @default(true)
+   944→  isMentor    Boolean  @default(false)
+   945→  createdAt   DateTime @default(now())
+   946→
+   947→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   948→}
+   949→
+   950→// ============================================================
+   951→// 20. NOTIFICATIONS (multi-channel)
+   952→// ============================================================
+   953→
+   954→model Notification {
+   955→  id          String   @id @default(cuid())
+   956→  tenantId    String
+   957→  title       String
+   958→  body        String
+   959→  channel     String   @default("app") // app, sms, whatsapp
+   960→  audience    String   @default("all") // all, parents, staff, students
+   961→  sentByUserId String?
+   962→  sentAt      DateTime @default(now())
+   963→  createdAt   DateTime @default(now())
+   964→
+   965→  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+   966→}
+   967→

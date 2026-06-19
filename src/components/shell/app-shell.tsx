@@ -19,6 +19,17 @@ import { AuditView } from "@/modules/audit/audit-view";
 import { ReportsView } from "@/modules/reports/reports-view";
 import { ExamsView } from "@/modules/exams/exams-view";
 import { ImportExportView } from "@/modules/import-export/import-export-view";
+import { HostelView } from "@/modules/hostel/hostel-view";
+import { MuhasabaView } from "@/modules/muhasaba/muhasaba-view";
+import { LibraryView } from "@/modules/library/library-view";
+import { DonorsView } from "@/modules/donors/donors-view";
+import { CalendarView } from "@/modules/calendar/calendar-view";
+import { TransportView } from "@/modules/transport/transport-view";
+import { HealthView } from "@/modules/health/health-view";
+import { FeedbackView } from "@/modules/feedback/feedback-view";
+import { AdmissionView } from "@/modules/admission/admission-view";
+import { AlumniView } from "@/modules/alumni/alumni-view";
+import { InventoryView } from "@/modules/inventory/inventory-view";
 
 export function AppShell() {
   const { view } = useApp();
@@ -40,6 +51,17 @@ export function AppShell() {
       case "reports": return <ReportsView />;
       case "exams": return <ExamsView />;
       case "import": return <ImportExportView />;
+      case "hostel": return <HostelView />;
+      case "muhasaba": return <MuhasabaView />;
+      case "library": return <LibraryView />;
+      case "donors": return <DonorsView />;
+      case "calendar": return <CalendarView />;
+      case "transport": return <TransportView />;
+      case "health": return <HealthView />;
+      case "feedback": return <FeedbackView />;
+      case "admission": return <AdmissionView />;
+      case "alumni": return <AlumniView />;
+      case "inventory": return <InventoryView />;
       default: return <DashboardView />;
     }
   };

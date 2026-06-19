@@ -7,6 +7,7 @@ import { Plus, Search, Users, Loader2, ChevronLeft, ChevronRight } from "lucide-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -14,6 +15,7 @@ import { useApp } from "@/store/app-store";
 
 import { TeacherForm } from "./teacher-form";
 import { TeachersGrid, TeachersEmptyState } from "./teachers-grid";
+import { TeachersPayrollTab } from "./teachers-payroll-tab";
 import { SPECIALIZATIONS, type TeacherDTO, type TeacherListResponse } from "./types";
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -21,6 +23,7 @@ const PAGE_SIZE = 20;
 
 export function TeachersView() {
   const { t, tenantName, dir } = useApp();
+  const [tab, setTab] = useState("staff");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [specialization, setSpecialization] = useState<string>("all");
@@ -116,15 +119,86 @@ export function TeachersView() {
             </p>
           </div>
         </div>
-        <Button
-          onClick={handleAdd}
-          className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700"
-        >
-          <Plus className="size-4" />
-          {t("teachers.add")}
-        </Button>
+        {tab === "staff" && (
+          <Button
+            onClick={handleAdd}
+            className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700"
+          >
+            <Plus className="size-4" />
+            {t("teachers.add")}
+          </Button>
+        )}
       </header>
 
+      <Tabs value={tab} onValueChange={setTab} dir={dir()} className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="staff">{t("nav.teachers")}</TabsTrigger>
+          <TabsTrigger value="payroll">{t("teachers.payroll")}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="staff" className="mt-4">
+          <StaffTabContent
+            loading={loading}
+            teachers={teachers}
+            hasFilters={hasFilters}
+            onAdd={handleAdd}
+            onEdit={handleEdit}
+            onChanged={load}
+            currency={currency}
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            summary={summary}
+            search={search}
+            setSearch={setSearch}
+            specialization={specialization}
+            setSpecialization={(v) => { setSpecialization(v); setPage(1); }}
+            setPage={setPage}
+          />
+        </TabsContent>
+        <TabsContent value="payroll" className="mt-4">
+          <TeachersPayrollTab />
+        </TabsContent>
+      </Tabs>
+
+      <TeacherForm
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        teacher={editTarget}
+        onSaved={load}
+      />
+    </div>
+  );
+}
+
+type StaffTabProps = {
+  loading: boolean;
+  teachers: TeacherDTO[];
+  hasFilters: boolean;
+  onAdd: () => void;
+  onEdit: (t: TeacherDTO) => void;
+  onChanged: () => void;
+  currency: string;
+  page: number;
+  totalPages: number;
+  total: number;
+  summary: { from: number; to: number };
+  search: string;
+  setSearch: (s: string) => void;
+  specialization: string;
+  setSpecialization: (v: string) => void;
+  setPage: (fn: (p: number) => number) => void;
+};
+
+function StaffTabContent(props: StaffTabProps) {
+  const { t } = useApp();
+  const {
+    loading, teachers, hasFilters, onAdd, onEdit, onChanged, currency,
+    page, totalPages, total, summary, search, setSearch,
+    specialization, setSpecialization, setPage,
+  } = props;
+
+  return (
+    <>
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
@@ -136,7 +210,7 @@ export function TeachersView() {
             className="ps-9"
           />
         </div>
-        <Select value={specialization} onValueChange={(v) => { setSpecialization(v); setPage(1); }}>
+        <Select value={specialization} onValueChange={setSpecialization}>
           <SelectTrigger className="sm:w-56 w-full">
             <SelectValue />
           </SelectTrigger>
@@ -153,14 +227,14 @@ export function TeachersView() {
       {loading ? (
         <TeachersSkeleton />
       ) : teachers.length === 0 ? (
-        <TeachersEmptyState filtered={hasFilters} onAdd={handleAdd} />
+        <TeachersEmptyState filtered={hasFilters} onAdd={onAdd} />
       ) : (
         <>
           <TeachersGrid
             teachers={teachers}
             currency={currency}
-            onEdit={handleEdit}
-            onChanged={load}
+            onEdit={onEdit}
+            onChanged={onChanged}
           />
 
           {/* Pagination */}
@@ -192,14 +266,7 @@ export function TeachersView() {
           </div>
         </>
       )}
-
-      <TeacherForm
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        teacher={editTarget}
-        onSaved={load}
-      />
-    </div>
+    </>
   );
 }
 
