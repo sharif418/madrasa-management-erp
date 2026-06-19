@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   LayoutDashboard, Users, GraduationCap, BookOpen, Wallet,
   Bell, BookMarked, ClipboardList, Settings, Banknote, History,
-  FileBarChart, Moon, X,
+  FileBarChart, Moon, X, ArrowUpDown,
 } from "lucide-react";
 
 type NavItem = { key: ViewKey; icon: typeof Users };
@@ -38,6 +38,7 @@ const groups: NavGroup[] = [
       { key: "wallet", icon: Wallet },
       { key: "notices", icon: Bell },
       { key: "reports", icon: FileBarChart },
+      { key: "import", icon: ArrowUpDown },
       { key: "settings", icon: Settings },
       { key: "audit", icon: History },
     ],

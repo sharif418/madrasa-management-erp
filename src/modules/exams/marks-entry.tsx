@@ -215,10 +215,10 @@ export function MarksEntry({
             <ScrollArea className="max-h-[55vh] rounded-md border">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="sticky top-0 z-10 bg-background min-w-32">{t("exams.students")}</TableHead>
+                  <TableRow className="bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/40 dark:to-purple-950/40 hover:bg-violet-50">
+                    <TableHead className="sticky top-0 z-10 min-w-32 bg-inherit">{t("exams.students")}</TableHead>
                     {subjects.map((sub) => (
-                      <TableHead key={sub} className="sticky top-0 z-10 bg-background min-w-40 text-center">
+                      <TableHead key={sub} className="sticky top-0 z-10 min-w-40 bg-inherit text-center">
                         <div className="flex items-center justify-center gap-1">
                           <span className="font-medium">{sub}</span>
                           <button

@@ -191,7 +191,15 @@ export function ReportCardView({ exams }: { exams: ExamListItem[] }) {
                   {report.students.map((s) => {
                     const isTop3 = s.rank <= 3;
                     return (
-                      <TableRow key={s.studentId} className={cn(isTop3 && "bg-emerald-50/50 dark:bg-emerald-950/20")}>
+                      <TableRow
+                        key={s.studentId}
+                        className={cn(
+                          "transition-colors hover:bg-muted/40",
+                          isTop3 && s.rank === 1 && "bg-amber-50/60 dark:bg-amber-950/20",
+                          isTop3 && s.rank === 2 && "bg-slate-50/60 dark:bg-slate-900/20",
+                          isTop3 && s.rank === 3 && "bg-orange-50/60 dark:bg-orange-950/20",
+                        )}
+                      >
                         <TableCell className="text-center">
                           <RankBadge rank={s.rank} />
                         </TableCell>

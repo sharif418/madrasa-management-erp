@@ -76,7 +76,7 @@ export function WalletTable({ items, loading, onView, onTopUp }: Props) {
     <div className="rounded-md border overflow-hidden">
       <Table>
         <TableHeader>
-          <TableRow>
+          <TableRow className="bg-muted/40 hover:bg-muted/40">
             <TableHead>{t("wallet.student")}</TableHead>
             <TableHead className="text-end">{t("wallet.balance")}</TableHead>
             <TableHead className="hidden md:table-cell text-end">{t("wallet.recentActivity")}</TableHead>
@@ -84,65 +84,69 @@ export function WalletTable({ items, loading, onView, onTopUp }: Props) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {items.map((w) => (
-            <TableRow key={w.id} className="hover:bg-muted/40">
-              <TableCell>
-                <div className="flex flex-col">
-                  <span className="font-medium">{w.student.name}</span>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    {w.student.rollNo && (
-                      <span className="font-mono text-[11px] text-muted-foreground">
-                        #{w.student.rollNo}
+          {items.map((w) => {
+            const tone = balanceTone(w.balance);
+            return (
+              <TableRow key={w.id} className="transition-colors hover:bg-muted/50">
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{w.student.name}</span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {w.student.rollNo && (
+                        <span className="font-mono text-[11px] text-muted-foreground">
+                          #{w.student.rollNo}
+                        </span>
+                      )}
+                      {!w.student.isActive && (
+                        <Badge className="text-[10px] h-4 bg-rose-100 text-rose-700 hover:bg-rose-100 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                          {t("common.inactive")}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell className="text-end">
+                  <span className={`inline-flex items-baseline gap-0.5 text-base font-bold tabular-nums ${tone}`}>
+                    <span className="text-sm align-top">৳</span>
+                    {cur(w.balance)}
+                  </span>
+                </TableCell>
+                <TableCell className="hidden md:table-cell text-end">
+                  <div className="flex flex-col items-end">
+                    <span className="text-sm font-medium tabular-nums">{w.logsCount}</span>
+                    {w.recentLog ? (
+                      <span className="text-[11px] text-muted-foreground">
+                        {t("wallet.lastTransaction")} {fmtRelative(w.recentLog.createdAt)}
                       </span>
-                    )}
-                    {!w.student.isActive && (
-                      <Badge variant="secondary" className="text-[10px] h-4">
-                        {t("common.inactive")}
-                      </Badge>
+                    ) : (
+                      <span className="text-[11px] text-muted-foreground">—</span>
                     )}
                   </div>
-                </div>
-              </TableCell>
-              <TableCell className="text-end">
-                <span className={`text-base font-bold tabular-nums ${balanceTone(w.balance)}`}>
-                  ৳{cur(w.balance)}
-                </span>
-              </TableCell>
-              <TableCell className="hidden md:table-cell text-end">
-                <div className="flex flex-col items-end">
-                  <span className="text-sm font-medium tabular-nums">{w.logsCount}</span>
-                  {w.recentLog ? (
-                    <span className="text-[11px] text-muted-foreground">
-                      {t("wallet.lastTransaction")} {fmtRelative(w.recentLog.createdAt)}
-                    </span>
-                  ) : (
-                    <span className="text-[11px] text-muted-foreground">—</span>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell className="text-end">
-                <div className="flex items-center justify-end gap-1">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-8 gap-1"
-                    onClick={() => onView(w)}
-                  >
-                    <Eye className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t("wallet.viewDetails")}</span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="h-8 gap-1 bg-emerald-600 hover:bg-emerald-700"
-                    onClick={() => onTopUp(w)}
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t("wallet.topUp")}</span>
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+                </TableCell>
+                <TableCell className="text-end">
+                  <div className="flex items-center justify-end gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 gap-1"
+                      onClick={() => onView(w)}
+                    >
+                      <Eye className="h-4 w-4" />
+                      <span className="hidden sm:inline">{t("wallet.viewDetails")}</span>
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="h-8 gap-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700"
+                      onClick={() => onTopUp(w)}
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span className="hidden sm:inline">{t("wallet.topUp")}</span>
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

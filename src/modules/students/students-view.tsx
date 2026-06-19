@@ -23,11 +23,19 @@ import { StudentForm } from "./student-form";
 import { StudentProfileView } from "./student-profile-view";
 import type { Student } from "./types";
 
+const ISLAMIC_PATTERN_STYLE: React.CSSProperties = {
+  backgroundImage:
+    "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><g fill='none' stroke='white' stroke-width='1'><polygon points='20,3 25,14 36,14 27,22 31,33 20,27 9,33 13,22 4,14 15,14'/></g></svg>\")",
+  backgroundSize: "40px 40px",
+  backgroundRepeat: "repeat",
+};
+
 const LIMIT = 20;
 
 export function StudentsView() {
   const t = useT();
   const dir = useApp((s) => s.dir());
+  const tenantName = useApp((s) => s.tenantName);
   const { toast } = useToast();
 
   const [search, setSearch] = useState("");
@@ -114,17 +122,26 @@ export function StudentsView() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-            <Users className="h-5 w-5" />
+          <div className="relative grid size-12 place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-600/20 ring-1 ring-white/30">
+            <div
+              className="pointer-events-none absolute inset-0 opacity-[0.15]"
+              aria-hidden="true"
+              style={ISLAMIC_PATTERN_STYLE}
+            />
+            <Users className="relative h-5 w-5 drop-shadow-sm" />
           </div>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">{t("students.title")}</h1>
             <p className="text-sm text-muted-foreground">
               {data ? t("students.totalRows", { count: data.total }) : t("common.loading")}
+              {tenantName ? ` · ${tenantName}` : ""}
             </p>
           </div>
         </div>
-        <Button onClick={handleAdd} className="w-full sm:w-auto">
+        <Button
+          onClick={handleAdd}
+          className="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700"
+        >
           <Plus className="mr-2 h-4 w-4" />
           {t("students.add")}
         </Button>

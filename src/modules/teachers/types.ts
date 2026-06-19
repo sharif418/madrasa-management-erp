@@ -76,15 +76,16 @@ export function getInitials(name: string): string {
 }
 
 // Deterministic gradient class for an avatar based on the name
+// Restricted to the emerald/teal/cyan/amber Islamic palette (no purple/pink/rose/indigo)
 const AVATAR_GRADIENTS = [
   "from-emerald-500 to-teal-600",
+  "from-teal-500 to-cyan-600",
+  "from-cyan-500 to-teal-600",
   "from-amber-500 to-orange-600",
-  "from-rose-500 to-pink-600",
-  "from-violet-500 to-purple-600",
-  "from-cyan-500 to-blue-600",
-  "from-lime-500 to-green-600",
-  "from-fuchsia-500 to-pink-600",
-  "from-sky-500 to-indigo-600",
+  "from-lime-500 to-emerald-600",
+  "from-green-500 to-teal-600",
+  "from-emerald-600 to-cyan-700",
+  "from-amber-400 to-amber-600",
 ];
 
 export function getAvatarGradient(name: string): string {

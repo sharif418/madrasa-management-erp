@@ -115,7 +115,9 @@ export function ExamsList({
         </div>
       ) : exams.length === 0 ? (
         <div className="rounded-2xl border border-dashed bg-card/40 p-12 text-center">
-          <GraduationCap className="mx-auto mb-3 size-12 opacity-30" />
+          <div className="mx-auto mb-3 grid size-12 place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 text-white opacity-70 ring-1 ring-white/30">
+            <GraduationCap className="size-6" />
+          </div>
           <p className="font-medium">{t("exams.empty")}</p>
           <p className="mt-1 text-sm text-muted-foreground max-w-md mx-auto">{t("exams.emptyDesc")}</p>
         </div>
@@ -125,7 +127,27 @@ export function ExamsList({
             {exams.map((e) => {
               const range = fmtRange(e);
               return (
-                <Card key={e.id} className="flex flex-col transition-shadow hover:shadow-md">
+                <Card
+                  key={e.id}
+                  className="group flex flex-col overflow-hidden py-0 gap-0 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                >
+                  {/* Gradient header band with Islamic pattern */}
+                  <div className="relative h-12 bg-gradient-to-r from-violet-500 to-purple-600">
+                    <div
+                      className="pointer-events-none absolute inset-0 opacity-[0.1]"
+                      aria-hidden="true"
+                      style={{
+                        backgroundImage:
+                          "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'><g fill='none' stroke='white' stroke-width='0.9'><polygon points='15,2 18,10 26,10 20,15 22,23 15,19 8,23 10,15 4,10 12,10'/></g></svg>\")",
+                        backgroundSize: "30px 30px",
+                        backgroundRepeat: "repeat",
+                      }}
+                    />
+                    <div
+                      className="pointer-events-none absolute -end-3 -top-3 size-14 rounded-full bg-white/15 blur-md transition-transform group-hover:scale-125"
+                      aria-hidden="true"
+                    />
+                  </div>
                   <CardContent className="flex flex-1 flex-col gap-3 p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex flex-wrap items-center gap-1.5">
@@ -175,7 +197,7 @@ export function ExamsList({
 
                     <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 border-t pt-2 text-xs text-muted-foreground">
                       <span className="inline-flex items-center gap-1">
-                        <ClipboardCheck className="size-3" />
+                        <ClipboardCheck className="size-3.5 text-violet-500 dark:text-violet-400" />
                         {t("exams.resultsCount", { count: e._count.results })}
                       </span>
                     </div>

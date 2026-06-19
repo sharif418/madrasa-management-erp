@@ -120,9 +120,25 @@ function TeacherCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, delay: Math.min(index * 0.04, 0.3) }}
     >
-      <Card className="group relative overflow-hidden py-0 gap-0 hover:shadow-md transition-shadow">
-        {/* Top color band */}
-        <div className={`h-16 w-full bg-gradient-to-r ${gradient}`} />
+      <Card className="group relative overflow-hidden py-0 gap-0 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+        {/* Top color band with Islamic 8-point star tessellation */}
+        <div className={`relative h-16 w-full bg-gradient-to-r ${gradient}`}>
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.1]"
+            aria-hidden="true"
+            style={{
+              backgroundImage:
+                "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'><g fill='none' stroke='white' stroke-width='0.9'><polygon points='15,2 18,10 26,10 20,15 22,23 15,19 8,23 10,15 4,10 12,10'/></g></svg>\")",
+              backgroundSize: "30px 30px",
+              backgroundRepeat: "repeat",
+            }}
+          />
+          {/* Soft glow accent */}
+          <div
+            className="pointer-events-none absolute -end-4 -top-4 size-20 rounded-full bg-white/15 blur-xl transition-transform group-hover:scale-125"
+            aria-hidden="true"
+          />
+        </div>
 
         <div className="px-4 pb-4 -mt-8">
           <div className="flex items-end justify-between">
@@ -147,7 +163,11 @@ function TeacherCard({
               <h3 className="font-semibold text-base leading-tight">{teacher.name}</h3>
               <Badge
                 variant={teacher.isActive ? "default" : "secondary"}
-                className="text-[10px] px-1.5 py-0"
+                className={
+                  teacher.isActive
+                    ? "text-[10px] px-1.5 py-0 bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                    : "text-[10px] px-1.5 py-0 bg-rose-100 text-rose-700 hover:bg-rose-100 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800"
+                }
               >
                 {teacher.isActive ? t("teachers.active") : t("teachers.inactive")}
               </Badge>
@@ -212,8 +232,18 @@ export function TeachersEmptyState({
   const { t } = useApp();
   return (
     <div className="flex flex-col items-center justify-center text-center py-16 px-4">
-      <div className="size-16 rounded-full bg-muted flex items-center justify-center mb-4">
-        <Users className="size-8 text-muted-foreground" />
+      <div className="relative mb-4 grid size-16 place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-600/20 ring-1 ring-white/30">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.15]"
+          aria-hidden="true"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><g fill='none' stroke='white' stroke-width='1'><polygon points='20,3 25,14 36,14 27,22 31,33 20,27 9,33 13,22 4,14 15,14'/></g></svg>\")",
+            backgroundSize: "40px 40px",
+            backgroundRepeat: "repeat",
+          }}
+        />
+        <Users className="relative size-8 drop-shadow-sm" />
       </div>
       <h3 className="text-lg font-semibold">
         {filtered ? t("teachers.emptyFiltered") : t("teachers.empty")}
@@ -222,7 +252,10 @@ export function TeachersEmptyState({
         {filtered ? t("teachers.emptyFilteredDesc") : t("teachers.emptyDesc")}
       </p>
       {!filtered && (
-        <Button className="mt-4" onClick={onAdd}>
+        <Button
+          onClick={onAdd}
+          className="mt-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700"
+        >
           {t("teachers.add")}
         </Button>
       )}

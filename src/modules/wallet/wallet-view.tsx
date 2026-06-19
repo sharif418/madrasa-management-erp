@@ -73,18 +73,45 @@ export function WalletView() {
   return (
     <div dir={dir()} className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="size-10 rounded-xl bg-emerald-600/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
-          <WalletIcon className="size-5" />
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="relative grid size-12 place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-600/20 ring-1 ring-white/30">
+            <div
+              className="pointer-events-none absolute inset-0 opacity-[0.15]"
+              aria-hidden="true"
+              style={{
+                backgroundImage:
+                  "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><g fill='none' stroke='white' stroke-width='1'><polygon points='20,3 25,14 36,14 27,22 31,33 20,27 9,33 13,22 4,14 15,14'/></g></svg>\")",
+                backgroundSize: "40px 40px",
+                backgroundRepeat: "repeat",
+              }}
+            />
+            <WalletIcon className="relative size-6 drop-shadow-sm" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">{t("wallet.title")}</h1>
+            <p className="text-sm text-muted-foreground">{t("wallet.subtitle")}</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("wallet.title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("wallet.subtitle")}</p>
-        </div>
-      </div>
+      </header>
 
-      {/* Hero total-balance card */}
-      <Card className="border-0 bg-gradient-to-br from-emerald-700 via-emerald-800 to-teal-900 text-white overflow-hidden relative">
+      {/* Hero total-balance card with Islamic 8-point star tessellation */}
+      <Card className="border-0 bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white overflow-hidden relative shadow-lg shadow-emerald-700/20">
+        {/* Islamic 8-point star pattern overlay */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.1]"
+          aria-hidden="true"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='50' height='50' viewBox='0 0 50 50'><g fill='none' stroke='white' stroke-width='1.1'><polygon points='25,4 31,16 44,16 33,26 38,40 25,32 12,40 17,26 6,16 19,16'/><polygon points='25,16 30,21 25,26 20,21'/></g></svg>\")",
+            backgroundSize: "50px 50px",
+            backgroundRepeat: "repeat",
+          }}
+        />
+        {/* Decorative Wallet icon in the corner */}
+        <div className="pointer-events-none absolute -end-6 -top-6 opacity-15" aria-hidden="true">
+          <WalletIcon className="size-44" strokeWidth={1} />
+        </div>
         <CardContent className="p-5 md:p-7 relative z-10">
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>
@@ -92,7 +119,10 @@ export function WalletView() {
                 <WalletIcon className="h-4 w-4" />
                 <span className="text-sm uppercase tracking-wider">{t("wallet.totalBalance")}</span>
               </div>
-              <p className="text-3xl md:text-4xl font-bold mt-2 tabular-nums">৳ {cur(data?.totalBalance ?? 0)}</p>
+              <p className="text-3xl md:text-4xl font-bold mt-2 tabular-nums drop-shadow-sm">
+                <span className="me-1 text-2xl md:text-3xl align-top">৳</span>
+                {cur(data?.totalBalance ?? 0)}
+              </p>
               <p className="text-xs md:text-sm opacity-80 mt-2">{t("wallet.totalBalanceDesc")}</p>
             </div>
             <div className="flex gap-3">
@@ -101,8 +131,7 @@ export function WalletView() {
             </div>
           </div>
         </CardContent>
-        <div className="pointer-events-none absolute -top-10 -end-10 h-40 w-40 rounded-full bg-white/10" />
-        <div className="pointer-events-none absolute -bottom-12 -start-12 h-44 w-44 rounded-full bg-amber-400/10" />
+        <div className="pointer-events-none absolute -bottom-12 -start-12 h-44 w-44 rounded-full bg-amber-400/15" />
       </Card>
 
       {/* Search */}

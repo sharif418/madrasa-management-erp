@@ -61,15 +61,28 @@ export function AuditView() {
   return (
     <div dir={dir()} className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="size-10 rounded-xl bg-amber-600/10 text-amber-700 dark:text-amber-400 flex items-center justify-center">
-          <History className="size-5" />
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="relative grid size-12 place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-600/20 ring-1 ring-white/30">
+            {/* Islamic 8-point star tessellation overlay */}
+            <div
+              className="pointer-events-none absolute inset-0 opacity-[0.15]"
+              aria-hidden="true"
+              style={{
+                backgroundImage:
+                  "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><g fill='none' stroke='white' stroke-width='1'><polygon points='20,3 25,14 36,14 27,22 31,33 20,27 9,33 13,22 4,14 15,14'/></g></svg>\")",
+                backgroundSize: "40px 40px",
+                backgroundRepeat: "repeat",
+              }}
+            />
+            <History className="relative size-6 drop-shadow-sm" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">{t("audit.title")}</h1>
+            <p className="text-sm text-muted-foreground">{t("audit.subtitle")}</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{t("audit.title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("audit.subtitle")}</p>
-        </div>
-      </div>
+      </header>
 
       {/* Filters */}
       <AuditFiltersBar

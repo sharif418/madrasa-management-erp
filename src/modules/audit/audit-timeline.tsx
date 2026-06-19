@@ -55,8 +55,11 @@ export function AuditTimeline({ items, loading, hasFilters = false }: Props) {
 
   return (
     <ol className="relative space-y-3 ps-2">
-      {/* vertical spine */}
-      <div className="absolute inset-y-2 start-[18px] w-px bg-border/70" aria-hidden />
+      {/* gradient vertical spine — emerald → amber */}
+      <div
+        className="pointer-events-none absolute inset-y-2 start-[18px] w-px bg-gradient-to-b from-emerald-400 via-amber-400 to-amber-600 opacity-60"
+        aria-hidden="true"
+      />
       {items.map((e) => (
         <TimelineRow key={e.id} entry={e} locale={locale} />
       ))}
@@ -87,18 +90,19 @@ function TimelineRow({
 
   return (
     <li className="relative ps-10" dir={dir()}>
-      {/* icon node */}
+      {/* icon node — distinct tinted background per action */}
       <span
-        className={`absolute start-0 top-1 inline-flex h-9 w-9 items-center justify-center rounded-full bg-background ring-2 ${colors.ring} ${colors.icon}`}
+        className={`absolute start-0 top-1 inline-flex h-9 w-9 items-center justify-center rounded-full bg-background ring-2 shadow-sm ${colors.ring} ${colors.icon}`}
       >
         <Icon className="h-4 w-4" />
       </span>
 
-      <div className="rounded-xl border border-border/60 bg-card px-4 py-3">
+      <div className="rounded-xl border border-border/60 bg-card px-4 py-3 transition-colors hover:bg-muted/30">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="outline" className={colors.badge}>
+                <span className={`me-1 size-1.5 rounded-full ${colors.dot}`} />
                 {t(`audit.${action}`)}
               </Badge>
               <span className="text-sm font-semibold">{entry.module}</span>

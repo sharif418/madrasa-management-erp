@@ -95,8 +95,9 @@ export const trxTypeColors: Record<
 };
 
 // Balance color helpers
+// Positive (≥1) = emerald, zero/negative = rose, low (<100) = amber
 export function balanceTone(balance: number): string {
-  if (balance <= 0) return "text-muted-foreground";
+  if (balance <= 0) return "text-rose-600 dark:text-rose-400";
   if (balance < 100) return "text-amber-600 dark:text-amber-400";
   return "text-emerald-600 dark:text-emerald-400";
 }

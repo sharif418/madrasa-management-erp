@@ -18,7 +18,8 @@ export type ViewKey =
   | "notices"
   | "settings"
   | "audit"
-  | "reports";
+  | "reports"
+  | "import";
 
 type AuthScreen = "landing" | "login" | "signup";
 

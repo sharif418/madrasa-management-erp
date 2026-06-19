@@ -23,18 +23,20 @@ export function AuditFiltersBar({ filters, onChange, modules }: Props) {
     filters.action || filters.module || filters.from || filters.to;
 
   return (
-    <Card className="border border-border/60">
+    <Card className="border border-border/60 shadow-sm">
       <CardContent className="p-4" dir={dir()}>
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2 text-sm font-medium">
-            <Filter className="h-4 w-4 text-muted-foreground" />
+            <span className="inline-flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-sm">
+              <Filter className="h-3.5 w-3.5" />
+            </span>
             {t("audit.filters")}
           </div>
           {hasAny && (
             <button
               type="button"
               onClick={() => onChange({ action: "", module: "", actorId: "", from: "", to: "" })}
-              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="inline-flex items-center gap-1 rounded-full bg-muted/60 px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             >
               <X className="h-3 w-3" />
               {t("common.cancel")}

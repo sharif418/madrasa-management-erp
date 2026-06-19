@@ -28,9 +28,9 @@ export function gradeFor(pct: number): "A+" | "A" | "B" | "C" | "D" | "F" {
 export const TERM_LIST: Exclude<TermKey, null>[] = ["first", "second", "final"];
 
 export const TERM_TINT: Record<string, string> = {
-  first: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
-  second: "bg-teal-100 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300",
-  final: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
+  first: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900",
+  second: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-900",
+  final: "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border-rose-200 dark:border-rose-900",
 };
 
 export const GRADE_TINT: Record<string, string> = {
