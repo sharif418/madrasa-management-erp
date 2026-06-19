@@ -30,6 +30,8 @@ import { FeedbackView } from "@/modules/feedback/feedback-view";
 import { AdmissionView } from "@/modules/admission/admission-view";
 import { AlumniView } from "@/modules/alumni/alumni-view";
 import { InventoryView } from "@/modules/inventory/inventory-view";
+import { AiView } from "@/modules/ai/ai-view";
+import { TimetableView } from "@/modules/timetable/timetable-view";
 
 export function AppShell() {
   const { view } = useApp();
@@ -62,6 +64,8 @@ export function AppShell() {
       case "admission": return <AdmissionView />;
       case "alumni": return <AlumniView />;
       case "inventory": return <InventoryView />;
+      case "ai": return <AiView />;
+      case "timetable": return <TimetableView />;
       default: return <DashboardView />;
     }
   };

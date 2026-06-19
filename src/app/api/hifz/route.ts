@@ -1,7 +1,8 @@
 // Hifz Records — list (filtered, paginated) + create
 // All queries scoped by tenantId from session.
 import { db } from "@/lib/db";
-import { ok, fail, withSession, auditAfter } from "@/lib/api";
+import { ok, fail, withSession, auditAfter, forbidden } from "@/lib/api";
+import { checkPermission } from "@/lib/permissions";
 
 // Allowed types & statuses (kept in original Islamic form across all languages)
 const TYPES = new Set(["sabak", "sabaq_para", "dhor"]);
@@ -73,6 +74,10 @@ export const GET = withSession(async ({ session, req }) => {
 
 // POST /api/hifz — create a new hifz record
 export const POST = withSession(async ({ session, req }) => {
+  // RBAC: require hifz:create permission
+  const allowed = await checkPermission(session, "hifz", "create");
+  if (!allowed) return forbidden("You don't have permission to record Hifz");
+
   const body = await req.json().catch(() => ({}));
   const {
     studentId, type, paraNumber, surahName, ayahFrom, ayahTo,

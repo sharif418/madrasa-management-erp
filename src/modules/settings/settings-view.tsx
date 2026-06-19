@@ -2,7 +2,7 @@
 // SettingsView — top-level shell for the Settings module
 // Tabs: Madrasa Info | Appearance | Roles
 import * as React from "react";
-import { Settings, Building2, Palette, ShieldCheck } from "lucide-react";
+import { Settings, Building2, Palette, ShieldCheck, Blocks } from "lucide-react";
 import { useApp } from "@/store/app-store";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,12 +11,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SettingsInfoTab, type TenantInfo } from "./settings-info";
 import { SettingsAppearanceTab } from "./settings-appearance";
 import { SettingsRolesTab } from "./settings-roles";
+import { SettingsModulesTab } from "./settings-modules";
 
 export function SettingsView() {
   const { t, dir } = useApp();
   const [info, setInfo] = React.useState<TenantInfo | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const [tab, setTab] = React.useState<"info" | "appearance" | "roles">("info");
+  const [tab, setTab] = React.useState<"info" | "appearance" | "roles" | "modules">("info");
 
   React.useEffect(() => {
     let alive = true;
@@ -83,6 +84,9 @@ export function SettingsView() {
             <TabsTrigger value="appearance">
               <Palette className="size-4" /> {t("settings.appearance")}
             </TabsTrigger>
+            <TabsTrigger value="modules">
+              <Blocks className="size-4" /> {t("settings.modules")}
+            </TabsTrigger>
             <TabsTrigger value="roles">
               <ShieldCheck className="size-4" /> {t("settings.roles")}
             </TabsTrigger>
@@ -93,6 +97,9 @@ export function SettingsView() {
           </TabsContent>
           <TabsContent value="appearance" className="mt-4">
             <SettingsAppearanceTab info={info} onSaved={setInfo} />
+          </TabsContent>
+          <TabsContent value="modules" className="mt-4">
+            <SettingsModulesTab />
           </TabsContent>
           <TabsContent value="roles" className="mt-4">
             <SettingsRolesTab />

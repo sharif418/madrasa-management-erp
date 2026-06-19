@@ -1,7 +1,8 @@
 // Students API — list (with filters + pagination) & create (with auto Wallet)
 // All queries scoped by tenantId from session.
 import { db } from "@/lib/db";
-import { ok, fail, withSession, auditAfter } from "@/lib/api";
+import { ok, fail, withSession, auditAfter, forbidden } from "@/lib/api";
+import { checkPermission } from "@/lib/permissions";
 
 // GET /api/students?search=&classId=&gender=&page=1&limit=20
 export const GET = withSession(async ({ session, req }) => {
@@ -45,6 +46,10 @@ export const GET = withSession(async ({ session, req }) => {
 
 // POST /api/students — create new student + auto-create wallet
 export const POST = withSession(async ({ session, req }) => {
+  // RBAC: require students:create permission
+  const allowed = await checkPermission(session, "students", "create");
+  if (!allowed) return forbidden("You don't have permission to create students");
+
   const body = await req.json().catch(() => ({}));
   const {
     name, nameArabic, rollNo, gender, dob, phone,

@@ -1,7 +1,8 @@
 // Transactions API — list (filters + pagination) & create (income/expense/transfer-Tamlik).
 // All multi-table writes happen inside db.$transaction for atomicity.
 import { db } from "@/lib/db";
-import { ok, fail, withSession, auditAfter } from "@/lib/api";
+import { ok, fail, withSession, auditAfter, forbidden } from "@/lib/api";
+import { checkPermission } from "@/lib/permissions";
 
 const VALID_TYPES = ["income", "expense", "transfer"] as const;
 const VALID_METHODS = ["cash", "bkash", "nagad", "bank", "wallet"] as const;
@@ -65,6 +66,10 @@ export const GET = withSession(async ({ session, req }) => {
 
 // ----------------------------- POST (create) --------------------------
 export const POST = withSession(async ({ session, req }) => {
+  // RBAC: require finance:create permission
+  const allowed = await checkPermission(session, "finance", "create");
+  if (!allowed) return forbidden("You don't have permission to create transactions");
+
   const body = await req.json().catch(() => ({}));
   const {
     fundId, amount, type, category, description,

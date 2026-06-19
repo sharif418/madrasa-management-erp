@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
-  Plus, Search, GraduationCap, BookOpenText,
+  Plus, Search, GraduationCap, BookOpenText, Layers,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -24,8 +24,9 @@ import { ClassForm } from "./class-form";
 import { SubjectsTable } from "./subjects-table";
 import { SubjectForm } from "./subject-form";
 import { ClassesSkeleton, SubjectsSkeleton } from "./academic-skeletons";
+import { AcademicLevelsTab } from "./academic-levels-tab";
 
-type Tab = "classes" | "subjects";
+type Tab = "classes" | "subjects" | "levels";
 
 export function AcademicView() {
   const t = useT();
@@ -125,23 +126,11 @@ export function AcademicView() {
     }
   }, [classes, classFilter]);
 
-  const handleAddClass = () => {
-    setEditClass(null);
-    setClassFormOpen(true);
-  };
-  const handleEditClass = (cls: ClassDTO) => {
-    setEditClass(cls);
-    setClassFormOpen(true);
-  };
+  const handleAddClass = () => { setEditClass(null); setClassFormOpen(true); };
+  const handleEditClass = (cls: ClassDTO) => { setEditClass(cls); setClassFormOpen(true); };
 
-  const handleAddSubject = () => {
-    setEditSubject(null);
-    setSubjectFormOpen(true);
-  };
-  const handleEditSubject = (s: SubjectDTO) => {
-    setEditSubject(s);
-    setSubjectFormOpen(true);
-  };
+  const handleAddSubject = () => { setEditSubject(null); setSubjectFormOpen(true); };
+  const handleEditSubject = (s: SubjectDTO) => { setEditSubject(s); setSubjectFormOpen(true); };
 
   const hasSubjectFilters =
     !!debouncedSubjectSearch || typeFilter !== "all" || classFilter !== "all";
@@ -174,13 +163,15 @@ export function AcademicView() {
             </p>
           </div>
         </div>
-        <Button
-          onClick={tab === "classes" ? handleAddClass : handleAddSubject}
-          className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700"
-        >
-          <Plus className="size-4" />
-          {tab === "classes" ? t("academic.addClassShort") : t("academic.addSubjectShort")}
-        </Button>
+        {tab !== "levels" && (
+          <Button
+            onClick={tab === "classes" ? handleAddClass : handleAddSubject}
+            className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700"
+          >
+            <Plus className="size-4" />
+            {tab === "classes" ? t("academic.addClassShort") : t("academic.addSubjectShort")}
+          </Button>
+        )}
       </header>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
@@ -194,6 +185,10 @@ export function AcademicView() {
             <BookOpenText className="size-4" />
             {t("academic.tabs.subjects")}
             <span className="ms-1 text-xs text-muted-foreground">({subjects.length})</span>
+          </TabsTrigger>
+          <TabsTrigger value="levels">
+            <Layers className="size-4" />
+            {t("academic.tabs.levels")}
           </TabsTrigger>
         </TabsList>
 
@@ -274,6 +269,11 @@ export function AcademicView() {
               />
             )}
           </div>
+        </TabsContent>
+
+        {/* Levels tab */}
+        <TabsContent value="levels" className="mt-4">
+          <AcademicLevelsTab />
         </TabsContent>
       </Tabs>
 

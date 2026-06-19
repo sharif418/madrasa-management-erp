@@ -30,7 +30,9 @@ export type ViewKey =
   | "inventory"
   | "feedback"
   | "admission"
-  | "alumni";
+  | "alumni"
+  | "ai"
+  | "timetable";
 
 type AuthScreen = "landing" | "login" | "signup";
 
