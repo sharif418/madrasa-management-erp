@@ -3,6 +3,7 @@
 import { useApp } from "@/store/app-store";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
+import { NotificationBell } from "@/components/shell/notification-bell";
 import { Menu, LogOut, Moon, Search } from "lucide-react";
 import { toast } from "sonner";
 
@@ -64,6 +65,7 @@ export function AppHeader({
             <span className="sr-only">{t("command.hint")}</span>
           </Button>
           <LanguageSwitcher compact />
+          <NotificationBell />
           <Button variant="ghost" size="icon" onClick={onLogout} title={t("auth.logout")}>
             <LogOut className="h-4 w-4" />
           </Button>

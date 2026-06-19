@@ -32,6 +32,7 @@ import { AlumniView } from "@/modules/alumni/alumni-view";
 import { InventoryView } from "@/modules/inventory/inventory-view";
 import { AiView } from "@/modules/ai/ai-view";
 import { TimetableView } from "@/modules/timetable/timetable-view";
+import { WebsiteView } from "@/modules/website/website-view";
 
 export function AppShell() {
   const { view } = useApp();
@@ -66,6 +67,7 @@ export function AppShell() {
       case "inventory": return <InventoryView />;
       case "ai": return <AiView />;
       case "timetable": return <TimetableView />;
+      case "website": return <WebsiteView />;
       default: return <DashboardRouter />;
     }
   };

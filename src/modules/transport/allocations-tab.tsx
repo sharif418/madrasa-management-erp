@@ -52,7 +52,7 @@ export function AllocationsTab({
 
   return (
     <div className="rounded-xl border bg-card">
-      <div className="max-h-[28rem] overflow-y-auto">
+      <div className="max-h-[28rem] overflow-auto">
         <Table>
           <TableHeader className="sticky top-0 z-10 bg-muted/80 backdrop-blur">
             <TableRow>

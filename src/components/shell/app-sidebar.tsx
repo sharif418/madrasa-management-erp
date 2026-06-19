@@ -9,7 +9,7 @@ import {
   Bell, BookMarked, ClipboardList, Settings, Banknote, History,
   FileBarChart, Moon, X, ArrowUpDown,
   Bus, HeartPulse, MessageSquare, UserPlus, Package,
-  Library, Heart, Calendar, Building2, Sparkles, Bot, CalendarClock,
+  Library, Heart, Calendar, Building2, Sparkles, Bot, CalendarClock, Globe,
 } from "lucide-react";
 
 type NavItem = { key: ViewKey; icon: typeof Users };
@@ -54,6 +54,7 @@ const groups: NavGroup[] = [
       { key: "alumni", icon: GraduationCap },
       { key: "import", icon: ArrowUpDown },
       { key: "ai", icon: Bot },
+      { key: "website", icon: Globe },
       { key: "settings", icon: Settings },
       { key: "audit", icon: History },
     ],

@@ -94,7 +94,8 @@ export function SubjectsTable({
   return (
     <>
       <Card className="overflow-hidden py-0">
-        <Table>
+        <div className="overflow-x-auto">
+          <Table>
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
               <TableHead className="ps-4 w-[40%]">{t("academic.subjectName")}</TableHead>
@@ -115,6 +116,7 @@ export function SubjectsTable({
             ))}
           </TableBody>
         </Table>
+        </div>
       </Card>
 
       <DeleteDialog

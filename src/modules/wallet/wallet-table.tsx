@@ -37,7 +37,7 @@ export function WalletTable({ items, loading, onView, onTopUp }: Props) {
 
   if (loading) {
     return (
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -73,7 +73,7 @@ export function WalletTable({ items, loading, onView, onTopUp }: Props) {
   }
 
   return (
-    <div className="rounded-md border overflow-hidden">
+    <div className="rounded-md border overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/40 hover:bg-muted/40">
