@@ -33,6 +33,9 @@ import { InventoryView } from "@/modules/inventory/inventory-view";
 import { AiView } from "@/modules/ai/ai-view";
 import { TimetableView } from "@/modules/timetable/timetable-view";
 import { WebsiteView } from "@/modules/website/website-view";
+import { BillingView } from "@/modules/billing/billing-view";
+import { CommunicationsView } from "@/modules/communications/communications-view";
+import { AnalyticsView } from "@/modules/analytics/analytics-view";
 
 export function AppShell() {
   const { view } = useApp();
@@ -68,6 +71,9 @@ export function AppShell() {
       case "ai": return <AiView />;
       case "timetable": return <TimetableView />;
       case "website": return <WebsiteView />;
+      case "billing": return <BillingView />;
+      case "communications": return <CommunicationsView />;
+      case "analytics": return <AnalyticsView />;
       default: return <DashboardRouter />;
     }
   };
