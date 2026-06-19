@@ -90,7 +90,7 @@ export function TransactionsTable({ items, loading, onDelete }: Props) {
             const sign =
               tx.type === "income" ? "+" : tx.type === "expense" ? "−" : "↔";
             return (
-              <TableRow key={tx.id} className="hover:bg-muted/30">
+              <TableRow key={tx.id} className="hover:bg-muted/50 transition-colors">
                 <TableCell className="whitespace-nowrap text-sm">
                   {new Date(tx.date).toLocaleDateString(
                     locale === "ar" ? "ar-EG" : "bn-BD",

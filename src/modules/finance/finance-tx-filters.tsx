@@ -115,7 +115,7 @@ export function TransactionsFilterBar({
         <Chip
           label={t("finance.transfer")}
           value={`৳${cur(sums.transfer)}`}
-          tone="text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-800"
+          tone="text-violet-600 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/30 border-violet-200 dark:border-violet-800"
         />
       </div>
     </div>

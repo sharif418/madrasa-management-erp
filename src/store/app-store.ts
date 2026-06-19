@@ -17,7 +17,8 @@ export type ViewKey =
   | "exams"
   | "notices"
   | "settings"
-  | "audit";
+  | "audit"
+  | "reports";
 
 type AuthScreen = "landing" | "login" | "signup";
 

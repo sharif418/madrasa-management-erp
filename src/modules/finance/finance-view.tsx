@@ -6,7 +6,7 @@ import { useApp } from "@/store/app-store";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Wallet, ArrowDownCircle, ArrowUpCircle, Sparkles } from "lucide-react";
+import { Wallet, ArrowDownCircle, ArrowUpCircle, ArrowLeftRight } from "lucide-react";
 import { FinanceFunds } from "./finance-funds";
 import { FinanceTransactions } from "./finance-transactions";
 import type { Overview } from "./finance-types";
@@ -65,8 +65,8 @@ export function FinanceView() {
         {
           label: t("finance.transferTotal"),
           value: cur(overview.last30d.transfer),
-          icon: Sparkles,
-          tone: "from-amber-500 to-amber-700",
+          icon: ArrowLeftRight,
+          tone: "from-violet-500 to-violet-700",
         },
       ]
     : [];
@@ -84,33 +84,33 @@ export function FinanceView() {
         </div>
       </div>
 
-      {/* Stat strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      {/* Stat strip — consistent heights + hover lift */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {loading
           ? Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-24 rounded-xl" />
+              <Skeleton key={i} className="h-28 rounded-xl" />
             ))
           : stats.map((s) => (
               <Card
                 key={s.label}
-                className={`relative overflow-hidden border-0 text-white bg-gradient-to-br ${s.tone} shadow-sm`}
+                className={`group relative h-full overflow-hidden border-0 text-white bg-gradient-to-br ${s.tone} shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg`}
               >
                 <CardContent className="p-4 md:p-5">
-                  <div className="flex items-start justify-between">
-                    <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
                       <p className="text-xs uppercase tracking-wider opacity-90">
                         {s.label}
                       </p>
-                      <p className="text-xl md:text-2xl font-bold mt-1 tabular-nums">
+                      <p className="text-xl md:text-2xl font-bold mt-1 tabular-nums truncate">
                         ৳{s.value}
                       </p>
                     </div>
-                    <div className="rounded-xl bg-white/15 p-2 backdrop-blur-sm">
+                    <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/15 backdrop-blur-sm transition-transform group-hover:scale-105">
                       <s.icon className="h-5 w-5" />
                     </div>
                   </div>
                 </CardContent>
-                <div className="pointer-events-none absolute -bottom-6 -end-6 h-24 w-24 rounded-full bg-white/10" />
+                <div className="pointer-events-none absolute -bottom-6 -end-6 h-24 w-24 rounded-full bg-white/10 transition-transform group-hover:scale-125" />
               </Card>
             ))}
       </div>

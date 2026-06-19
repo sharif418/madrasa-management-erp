@@ -49,9 +49,9 @@ export function HifzView() {
   return (
     <div className="space-y-6" dir={dir()}>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="size-10 rounded-xl bg-emerald-600/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
+          <div className="size-11 rounded-xl bg-gradient-to-br from-emerald-500/15 to-emerald-700/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center ring-1 ring-emerald-600/20">
             <BookOpen className="size-5" />
           </div>
           <div>
@@ -61,7 +61,10 @@ export function HifzView() {
             </p>
           </div>
         </div>
-        <Button onClick={() => setFormOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 self-start sm:self-auto">
+        <Button
+          onClick={() => setFormOpen(true)}
+          className="self-start bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-md shadow-emerald-900/20 transition-all hover:from-emerald-600 hover:to-emerald-800 hover:shadow-lg hover:-translate-y-0.5 sm:self-auto"
+        >
           <Plus className="size-4" /> {t("hifz.add")}
         </Button>
       </div>

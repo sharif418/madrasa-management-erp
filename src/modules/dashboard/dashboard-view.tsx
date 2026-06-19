@@ -90,15 +90,36 @@ export function DashboardView() {
 
   return (
     <div className="space-y-6">
-      {/* Welcome banner */}
+      {/* Welcome banner with Islamic geometric pattern overlay */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 p-6 text-white shadow-lg sm:p-8">
+        {/* Soft glow accents */}
         <div className="absolute -end-10 -top-10 size-48 rounded-full bg-white/10 blur-2xl" aria-hidden="true" />
         <div className="absolute -bottom-12 end-1/3 size-40 rounded-full bg-amber-300/20 blur-3xl" aria-hidden="true" />
+        {/* CSS-only Islamic 8-point star tessellation (opacity-low, pointer-events-none) */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.08]"
+          aria-hidden="true"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'><g fill='none' stroke='white' stroke-width='1.2'><polygon points='30,4 36,18 50,18 39,28 44,42 30,34 16,42 21,28 10,18 24,18'/><polygon points='30,18 36,24 30,30 24,24'/></g></svg>\")",
+            backgroundSize: "60px 60px",
+            backgroundRepeat: "repeat",
+          }}
+        />
+        {/* Crescent moon glyph in the corner for Islamic ambiance */}
+        <svg
+          className="pointer-events-none absolute -end-6 -bottom-6 size-32 text-white/10"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path d="M16.5 3.5A9.5 9.5 0 1 0 20.5 17 7.5 7.5 0 0 1 16.5 3.5z" />
+        </svg>
         <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-medium ring-1 ring-white/25">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-medium ring-1 ring-white/25 backdrop-blur-sm">
               <Sparkles className="size-3.5" />
-              {t("dashboard.title")}
+              {t("dashboard.banner.tag")} · {t("dashboard.title")}
             </div>
             <h1 className="text-2xl font-bold sm:text-3xl">
               {t("dashboard.welcome")}, {user?.name?.split(" ")[0] ?? "Guest"} 👋

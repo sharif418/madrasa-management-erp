@@ -131,7 +131,10 @@ export function HifzRecordsTable({ students, onAddClick, refreshKey }: Props) {
           <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
         </div>
         <div className="flex items-end">
-          <Button onClick={onAddClick} className="w-full bg-emerald-600 hover:bg-emerald-700">
+          <Button
+            onClick={onAddClick}
+            className="w-full bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-sm shadow-emerald-900/20 transition-all hover:from-emerald-600 hover:to-emerald-800 hover:shadow-md hover:-translate-y-0.5"
+          >
             <Plus className="size-4" /> {t("hifz.add")}
           </Button>
         </div>
@@ -171,7 +174,7 @@ export function HifzRecordsTable({ students, onAddClick, refreshKey }: Props) {
               </TableRow>
             ) : (
               items.map((r) => (
-                <TableRow key={r.id} className="hover:bg-muted/30">
+                <TableRow key={r.id} className="hover:bg-muted/50 transition-colors">
                   <TableCell className="font-medium">
                     <div className="flex flex-col">
                       <span>{r.studentName}</span>
@@ -261,11 +264,16 @@ export function HifzRecordsTable({ students, onAddClick, refreshKey }: Props) {
 function QualityStars({ value }: { value: number | null }) {
   if (value == null) return <span className="text-muted-foreground text-sm">—</span>;
   return (
-    <div className="flex items-center gap-0.5" aria-label={`${value}/5`}>
+    <div className="flex items-center gap-0.5" role="img" aria-label={`${value} / 5`}>
       {[1, 2, 3, 4, 5].map((n) => (
         <Star
           key={n}
-          className={cn("size-3.5", n <= value ? "fill-amber-400 text-amber-400" : "text-muted-foreground/40")}
+          className={cn(
+            "size-3.5 transition-colors",
+            n <= value
+              ? "fill-amber-400 text-amber-400"
+              : "fill-muted text-muted-foreground/40"
+          )}
         />
       ))}
     </div>

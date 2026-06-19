@@ -97,21 +97,21 @@ export const txTypeColors: Record<
   { amount: string; badge: string; dot: string }
 > = {
   income: {
-    amount: "text-emerald-600 dark:text-emerald-400",
+    amount: "text-emerald-600 dark:text-emerald-300",
     badge:
-      "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
     dot: "bg-emerald-500",
   },
   expense: {
-    amount: "text-rose-600 dark:text-rose-400",
+    amount: "text-rose-600 dark:text-rose-300",
     badge:
-      "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border-rose-200 dark:border-rose-800",
+      "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 border-rose-200 dark:border-rose-800",
     dot: "bg-rose-500",
   },
   transfer: {
-    amount: "text-purple-600 dark:text-purple-400",
+    amount: "text-violet-600 dark:text-violet-300",
     badge:
-      "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border-purple-200 dark:border-purple-800",
-    dot: "bg-purple-500",
+      "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300 border-violet-200 dark:border-violet-800",
+    dot: "bg-violet-500",
   },
 };

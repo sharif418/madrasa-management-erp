@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Sparkles, Wallet, TrendingUp } from "lucide-react";
+import { Plus, Sparkles, Wallet, TrendingUp, Moon, Star } from "lucide-react";
 import { AddFundDialog } from "./finance-form";
 import { TamlikDialog } from "./tamlik-dialog";
 import { fundTypeColors, type Fund, type Overview } from "./finance-types";
@@ -32,8 +32,19 @@ export function FinanceFunds({ overview, loading, reload }: Props) {
 
   return (
     <div className="space-y-5">
-      {/* Hero total balance card */}
+      {/* Hero total balance card with Islamic star + moon accents */}
       <Card className="border-0 bg-gradient-to-br from-emerald-700 via-emerald-800 to-teal-900 text-white overflow-hidden relative">
+        {/* CSS-only Islamic 8-point star tessellation overlay */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.08]"
+          aria-hidden="true"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'><g fill='none' stroke='white' stroke-width='1.2'><polygon points='30,4 36,18 50,18 39,28 44,42 30,34 16,42 21,28 10,18 24,18'/><polygon points='30,18 36,24 30,30 24,24'/></g></svg>\")",
+            backgroundSize: "60px 60px",
+            backgroundRepeat: "repeat",
+          }}
+        />
         <CardContent className="p-5 md:p-7 relative z-10">
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>
@@ -53,7 +64,7 @@ export function FinanceFunds({ overview, loading, reload }: Props) {
             <div className="flex gap-2 flex-wrap">
               <Button
                 onClick={() => setTamlikOpen(true)}
-                className="bg-amber-500 hover:bg-amber-600 text-white border-0"
+                className="bg-amber-500 hover:bg-amber-600 text-white border-0 shadow-md shadow-amber-900/30"
                 disabled={loading}
               >
                 <Sparkles className="h-4 w-4" />
@@ -89,7 +100,9 @@ export function FinanceFunds({ overview, loading, reload }: Props) {
             </div>
           </div>
         </CardContent>
-        <div className="pointer-events-none absolute -top-10 -end-10 h-40 w-40 rounded-full bg-white/10" />
+        {/* Decorative crescent moon + star icons in the corner */}
+        <Moon className="pointer-events-none absolute -end-4 -top-2 h-20 w-20 text-white/10" aria-hidden="true" />
+        <Star className="pointer-events-none absolute end-12 top-6 h-6 w-6 text-amber-300/30 fill-amber-300/20" aria-hidden="true" />
         <div className="pointer-events-none absolute -bottom-12 -start-12 h-44 w-44 rounded-full bg-amber-400/10" />
       </Card>
 
@@ -137,10 +150,10 @@ export function FinanceFunds({ overview, loading, reload }: Props) {
                   <span
                     className={`text-sm font-semibold tabular-nums ${
                       r.type === "income"
-                        ? "text-emerald-600 dark:text-emerald-400"
+                        ? "text-emerald-600 dark:text-emerald-300"
                         : r.type === "expense"
-                        ? "text-rose-600 dark:text-rose-400"
-                        : "text-purple-600 dark:text-purple-400"
+                        ? "text-rose-600 dark:text-rose-300"
+                        : "text-violet-600 dark:text-violet-300"
                     }`}
                   >
                     {r.type === "income" ? "+" : r.type === "expense" ? "−" : "↔"}
@@ -175,8 +188,8 @@ function FundCard({
   const { t } = useApp();
   const colors = fundTypeColors[fund.type];
   return (
-    <Card className={`group relative overflow-hidden border ring-1 ${colors.ring}`}>
-      <CardContent className="p-4 md:p-5">
+    <Card className={`group relative h-full overflow-hidden border ring-1 ${colors.ring} transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg`}>
+      <CardContent className="flex h-full flex-col p-4 md:p-5">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -201,13 +214,13 @@ function FundCard({
           </p>
         )}
         {typeof fund._count?.transactions === "number" && (
-          <p className="text-[11px] text-muted-foreground mt-3">
+          <p className="mt-auto pt-3 text-[11px] text-muted-foreground">
             {fund._count.transactions} transactions
           </p>
         )}
       </CardContent>
       <div
-        className={`pointer-events-none absolute -bottom-8 -end-8 h-24 w-24 rounded-full bg-gradient-to-br ${colors.gradient} opacity-10 group-hover:opacity-20 transition-opacity`}
+        className={`pointer-events-none absolute -bottom-8 -end-8 h-24 w-24 rounded-full bg-gradient-to-br ${colors.gradient} opacity-10 transition-opacity group-hover:opacity-20`}
       />
     </Card>
   );

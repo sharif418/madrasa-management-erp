@@ -14,6 +14,7 @@ import { AttendanceView } from "@/modules/attendance/attendance-view";
 import { NoticesView } from "@/modules/notices/notices-view";
 import { SettingsView } from "@/modules/settings/settings-view";
 import { AuditView } from "@/modules/audit/audit-view";
+import { ReportsView } from "@/modules/reports/reports-view";
 import { ExamsView } from "@/components/shell/exams-view-placeholder";
 
 export function AppShell() {
@@ -32,6 +33,7 @@ export function AppShell() {
       case "notices": return <NoticesView />;
       case "settings": return <SettingsView />;
       case "audit": return <AuditView />;
+      case "reports": return <ReportsView />;
       case "exams": return <ExamsView />;
       default: return <DashboardView />;
     }

@@ -82,11 +82,11 @@ export const typeAccent: Record<HifzType, string> = {
   dhor: "#9333ea",        // purple-700 (revision)
 };
 
-// Status color tokens for badges
+// Status color tokens for badges (emerald / amber / rose)
 export const statusBadgeClass: Record<HifzStatus, string> = {
-  completed: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
-  revision: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-  weak: "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300",
+  completed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+  revision: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+  weak: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
 };
 
 // Para cell color by status

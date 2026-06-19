@@ -20,6 +20,7 @@ import { useT } from "./i18n";
 import { useStudents, useClasses } from "./use-students";
 import { StudentsTable } from "./students-table";
 import { StudentForm } from "./student-form";
+import { StudentProfileView } from "./student-profile-view";
 import type { Student } from "./types";
 
 const LIMIT = 20;
@@ -36,6 +37,9 @@ export function StudentsView() {
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Student | null>(null);
+
+  // 360° profile view: when set, replaces the list with the detail view
+  const [viewingStudentId, setViewingStudentId] = useState<string | null>(null);
 
   // Debounced search — also resets to page 1 when search term changes
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -92,9 +96,18 @@ export function StudentsView() {
   };
 
   const handleView = (s: Student) => {
-    // Future: open a detail drawer. For now, treat as edit.
-    handleEdit(s);
+    setViewingStudentId(s.id);
   };
+
+  // Render the 360° profile view in place of the list when one is selected.
+  if (viewingStudentId) {
+    return (
+      <StudentProfileView
+        studentId={viewingStudentId}
+        onBack={() => setViewingStudentId(null)}
+      />
+    );
+  }
 
   return (
     <div dir={dir} className="space-y-6 p-4 sm:p-6">

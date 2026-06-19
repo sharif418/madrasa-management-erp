@@ -264,7 +264,11 @@ export function HifzForm({ open, onOpenChange, students, defaultStudentId, onCre
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t("common.cancel")}
             </Button>
-            <Button type="submit" disabled={submitting} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-sm shadow-emerald-900/20 transition-all hover:from-emerald-600 hover:to-emerald-800 hover:shadow-md hover:-translate-y-0.5"
+            >
               {submitting ? t("common.loading") : t("hifz.submit")}
             </Button>
           </DialogFooter>
