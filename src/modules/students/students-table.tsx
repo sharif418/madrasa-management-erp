@@ -1,5 +1,5 @@
 "use client";
-// Students table with status, hafiz, and action buttons
+// Students table with status, hafiz, and action buttons + selection column
 import { useState } from "react";
 import { Eye, Pencil, Trash2, Loader2, BookOpen } from "lucide-react";
 import {
@@ -8,6 +8,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -25,6 +26,10 @@ type Props = {
   loading?: boolean;
   onView?: (s: Student) => void;
   onEdit?: (s: Student) => void;
+  // Selection support
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
+  onToggleSelectAll?: (ids: string[]) => void;
 };
 
 // Deterministic emerald/teal/cyan/amber gradient per student name (no purple/pink)
@@ -52,11 +57,21 @@ function getInitials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-export function StudentsTable({ students, loading, onView, onEdit }: Props) {
+export function StudentsTable({
+  students, loading, onView, onEdit,
+  selectedIds, onToggleSelect, onToggleSelectAll,
+}: Props) {
   const t = useT();
   const { toast } = useToast();
   const deleteMut = useDeleteStudent();
   const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
+
+  const selectable = !!selectedIds && !!onToggleSelect;
+  const visibleIds = students.map((s) => s.id);
+  const allSelected =
+    selectable && visibleIds.length > 0 && visibleIds.every((id) => selectedIds!.has(id));
+  const someSelected =
+    selectable && visibleIds.some((id) => selectedIds!.has(id)) && !allSelected;
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -80,6 +95,7 @@ export function StudentsTable({ students, loading, onView, onEdit }: Props) {
         <Table>
           <TableHeader>
             <TableRow>
+              {selectable && <TableHead className="w-10" />}
               <TableHead className="w-20">{t("students.rollNo")}</TableHead>
               <TableHead>{t("students.name")}</TableHead>
               <TableHead className="hidden md:table-cell">{t("students.class")}</TableHead>
@@ -91,7 +107,7 @@ export function StudentsTable({ students, loading, onView, onEdit }: Props) {
           <TableBody>
             {Array.from({ length: 5 }).map((_, i) => (
               <TableRow key={i}>
-                {Array.from({ length: 6 }).map((__, j) => (
+                {Array.from({ length: selectable ? 7 : 6 }).map((__, j) => (
                   <TableCell key={j}>
                     <div className="h-4 w-full max-w-[120px] rounded bg-muted/60 animate-pulse" />
                   </TableCell>
@@ -119,6 +135,15 @@ export function StudentsTable({ students, loading, onView, onEdit }: Props) {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
+              {selectable && (
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                    onCheckedChange={() => onToggleSelectAll?.(visibleIds)}
+                    aria-label={t("students.selectAll")}
+                  />
+                </TableHead>
+              )}
               <TableHead className="w-20">{t("students.rollNo")}</TableHead>
               <TableHead>{t("students.name")}</TableHead>
               <TableHead className="hidden md:table-cell">{t("students.class")}</TableHead>
@@ -131,8 +156,22 @@ export function StudentsTable({ students, loading, onView, onEdit }: Props) {
             {students.map((s) => {
               const gradient = pickGradient(s.name);
               const initials = getInitials(s.name);
+              const isChecked = selectable ? selectedIds!.has(s.id) : false;
               return (
-                <TableRow key={s.id} className="transition-colors hover:bg-muted/50">
+                <TableRow
+                  key={s.id}
+                  className="transition-colors hover:bg-muted/50"
+                  data-selected={isChecked || undefined}
+                >
+                  {selectable && (
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={isChecked}
+                        onCheckedChange={() => onToggleSelect?.(s.id)}
+                        aria-label={`${t("students.select")} ${s.name}`}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell className="font-mono text-xs text-muted-foreground">
                     {s.rollNo || "—"}
                   </TableCell>

@@ -1,6 +1,7 @@
 // Feedback detail — PATCH status / assign / resolve
 import { db } from "@/lib/db";
-import { ok, fail, notFound, withSession, auditAfter } from "@/lib/api";
+import { ok, fail, notFound, withSession, auditAfter, forbidden } from "@/lib/api";
+import { checkPermission } from "@/lib/permissions";
 
 const STATUSES = new Set(["open", "in_review", "resolved", "closed"]);
 
@@ -11,6 +12,10 @@ type Body = {
 };
 
 export const PATCH = withSession(async ({ session, req, params }) => {
+  // RBAC: require feedback:update permission
+  const allowed = await checkPermission(session, "feedback", "update");
+  if (!allowed) return forbidden("You don't have permission to update feedback");
+
   const id = params?.id;
   if (!id) return fail("Missing feedback id");
 

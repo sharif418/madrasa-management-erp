@@ -4,7 +4,8 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
-import { ok, fail, unauthorized, notFound, auditAfter } from "@/lib/api";
+import { ok, fail, unauthorized, notFound, auditAfter, forbidden } from "@/lib/api";
+import { checkPermission } from "@/lib/permissions";
 
 const TYPES = ["academic", "quranic", "arabic", "general"];
 type Ctx = { params: Promise<{ id: string }> };
@@ -26,6 +27,9 @@ type UpdateInput = {
 export async function PUT(req: NextRequest, ctx: Ctx) {
   const session = await getSession();
   if (!session) return unauthorized();
+  // RBAC: require academic:update permission
+  const allowed = await checkPermission(session, "academic", "update");
+  if (!allowed) return forbidden("You don't have permission to update subjects");
   const { id } = await ctx.params;
   const existing = await getOwned(session.tenantId, id);
   if (!existing) return notFound("Subject not found");
@@ -68,6 +72,9 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
 export async function DELETE(_req: NextRequest, ctx: Ctx) {
   const session = await getSession();
   if (!session) return unauthorized();
+  // RBAC: require academic:delete permission
+  const allowed = await checkPermission(session, "academic", "delete");
+  if (!allowed) return forbidden("You don't have permission to delete subjects");
   const { id } = await ctx.params;
   const existing = await getOwned(session.tenantId, id);
   if (!existing) return notFound("Subject not found");

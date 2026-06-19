@@ -1,6 +1,7 @@
 // Notice by id — PUT (audit), DELETE (audit). Tenant-scoped.
 import { db } from "@/lib/db";
-import { ok, fail, notFound, withSession, auditAfter } from "@/lib/api";
+import { ok, fail, notFound, withSession, auditAfter, forbidden } from "@/lib/api";
+import { checkPermission } from "@/lib/permissions";
 
 const TYPES = new Set(["general", "urgent", "holiday", "exam", "event"]);
 const AUDIENCES = new Set(["all", "teachers", "students", "guardians"]);
@@ -10,6 +11,10 @@ const getOwned = (id: string, tenantId: string) =>
 
 // PUT /api/notices/[id]
 export const PUT = withSession(async ({ session, req, params }) => {
+  // RBAC: require notices:update permission
+  const allowed = await checkPermission(session, "notices", "update");
+  if (!allowed) return forbidden("You don't have permission to update notices");
+
   const id = params?.id;
   if (!id) return fail("Missing notice id");
   const existing = await getOwned(id, session.tenantId);
@@ -55,6 +60,10 @@ export const PUT = withSession(async ({ session, req, params }) => {
 
 // DELETE /api/notices/[id]
 export const DELETE = withSession(async ({ session, params }) => {
+  // RBAC: require notices:delete permission
+  const allowed = await checkPermission(session, "notices", "delete");
+  if (!allowed) return forbidden("You don't have permission to delete notices");
+
   const id = params?.id;
   if (!id) return fail("Missing notice id");
   const existing = await getOwned(id, session.tenantId);

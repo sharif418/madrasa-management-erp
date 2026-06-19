@@ -4,7 +4,8 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
-import { ok, unauthorized, notFound, fail, auditAfter } from "@/lib/api";
+import { ok, unauthorized, notFound, fail, auditAfter, forbidden } from "@/lib/api";
+import { checkPermission } from "@/lib/permissions";
 
 const CATEGORIES = ["fiqh", "tafsir", "hadith", "nahw", "sarf", "literature", "other"];
 type Ctx = { params: Promise<{ id: string }> };
@@ -16,6 +17,9 @@ async function getOwned(tenantId: string, id: string) {
 export async function PUT(req: NextRequest, ctx: Ctx) {
   const session = await getSession();
   if (!session) return unauthorized();
+  // RBAC: require library:update permission
+  const allowed = await checkPermission(session, "library", "update");
+  if (!allowed) return forbidden("You don't have permission to update books");
   const { id } = await ctx.params;
   const existing = await getOwned(session.tenantId, id);
   if (!existing) return notFound("Book not found");
@@ -52,6 +56,9 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
 export async function DELETE(_req: NextRequest, ctx: Ctx) {
   const session = await getSession();
   if (!session) return unauthorized();
+  // RBAC: require library:delete permission
+  const allowed = await checkPermission(session, "library", "delete");
+  if (!allowed) return forbidden("You don't have permission to delete books");
   const { id } = await ctx.params;
   const existing = await getOwned(session.tenantId, id);
   if (!existing) return notFound("Book not found");

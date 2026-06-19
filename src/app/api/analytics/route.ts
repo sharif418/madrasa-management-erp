@@ -1,9 +1,12 @@
 // Analytics & Insights API — comprehensive tenant-wide analytics
 // GET /api/analytics — predictive analytics + trends dashboard
 // All queries scope by session.tenantId. Parallel via Promise.all.
+// Cached in-memory for 60 seconds per tenant (cacheInvalidate("analytics:") on mutations).
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { ok, unauthorized } from "@/lib/api";
+import { unauthorized } from "@/lib/api";
 import { getSession } from "@/lib/session";
+import { cacheWrap, TTL } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -23,10 +26,16 @@ function startOfDay(d: Date): Date {
   return x;
 }
 
-export async function GET() {
-  const session = await getSession();
-  if (!session) return unauthorized();
-  const { tenantId } = session;
+function gradeFor(avg: number): string {
+  if (avg >= 90) return "A+";
+  if (avg >= 80) return "A";
+  if (avg >= 70) return "B";
+  if (avg >= 60) return "C";
+  if (avg >= 50) return "D";
+  return "F";
+}
+
+async function computeAnalytics(tenantId: string) {
   const now = new Date();
 
   // 6-month window for monthly trends; 30-day window for attendance trend
@@ -207,7 +216,7 @@ export async function GET() {
     };
   });
 
-  return ok({
+  return {
     kpis: {
       totalStudents: students.filter((s) => s.isActive).length,
       totalTeachers: teachers,
@@ -224,14 +233,24 @@ export async function GET() {
     topPerformers,
     atRiskStudents,
     fundHealth,
-  });
+  };
 }
 
-function gradeFor(avg: number): string {
-  if (avg >= 90) return "A+";
-  if (avg >= 80) return "A";
-  if (avg >= 70) return "B";
-  if (avg >= 60) return "C";
-  if (avg >= 50) return "D";
-  return "F";
+export async function GET() {
+  const session = await getSession();
+  if (!session) return unauthorized();
+  const { tenantId } = session;
+
+  // Read-through cache: 60s TTL, per-tenant key isolation.
+  const data = await cacheWrap(
+    `analytics:${tenantId}`,
+    TTL.ANALYTICS,
+    () => computeAnalytics(tenantId)
+  );
+
+  // `Cache-Control: no-store` — only the server-side cache should serve fresh data.
+  return NextResponse.json(
+    { ok: true, data },
+    { status: 200, headers: { "Cache-Control": "no-store" } }
+  );
 }

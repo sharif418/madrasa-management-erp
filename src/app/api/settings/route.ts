@@ -5,7 +5,25 @@ import { ok, fail, withSession, auditAfter } from "@/lib/api";
 
 const CURRENCIES = new Set(["BDT", "USD", "SAR", "EUR"]);
 const LANGUAGES = new Set(["bn", "en", "ar"]);
-const THEMES = new Set(["emerald", "violet", "rose", "amber", "teal", "cyan"]);
+
+// Theme presets — backward compat single colors + new 3-color palettes
+const THEME_PRESETS = new Set([
+  "emerald", "violet", "rose", "amber", "teal", "cyan",
+  "emeraldIslamic", "royalViolet", "sunsetAmber", "oceanTeal", "roseGarden",
+]);
+
+// Validate theme value: preset key OR custom palette "custom:#hex,#hex,#hex"
+function isValidTheme(v: string): boolean {
+  if (typeof v !== "string" || !v) return false;
+  if (v.length > 80) return false;
+  if (THEME_PRESETS.has(v)) return true;
+  if (v.startsWith("custom:")) {
+    const colors = v.slice(7).split(",");
+    if (colors.length < 1 || colors.length > 3) return false;
+    return colors.every((c) => /^#[0-9a-fA-F]{6}$/.test(c));
+  }
+  return false;
+}
 
 // GET /api/settings — return current tenant info
 export const GET = withSession(async ({ session }) => {
@@ -49,7 +67,7 @@ export const PUT = withSession(async ({ session, req }) => {
   if (body.logoUrl !== undefined) data.logoUrl = (body.logoUrl || "").trim() || null;
   if (body.currency !== undefined && CURRENCIES.has(body.currency)) data.currency = body.currency;
   if (body.language !== undefined && LANGUAGES.has(body.language)) data.language = body.language;
-  if (body.theme !== undefined && THEMES.has(body.theme)) data.theme = body.theme;
+  if (body.theme !== undefined && isValidTheme(body.theme)) data.theme = body.theme;
 
   if (Object.keys(data).length === 0) return fail("No valid fields to update");
 

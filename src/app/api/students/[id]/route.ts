@@ -1,7 +1,8 @@
 // Student by id — GET (with relations), PUT (update), DELETE
 // All scoped by tenantId from session.
 import { db } from "@/lib/db";
-import { ok, fail, notFound, withSession, auditAfter } from "@/lib/api";
+import { ok, fail, notFound, withSession, auditAfter, forbidden } from "@/lib/api";
+import { checkPermission } from "@/lib/permissions";
 
 // Helper: fetch one tenant-scoped student
 async function getStudent(id: string, tenantId: string) {
@@ -123,6 +124,10 @@ export const PUT = withSession(async ({ session, req, params }) => {
 
 // DELETE /api/students/[id]
 export const DELETE = withSession(async ({ session, params }) => {
+  // RBAC: require students:delete permission
+  const allowed = await checkPermission(session, "students", "delete");
+  if (!allowed) return forbidden("You don't have permission to delete students");
+
   const id = params?.id;
   if (!id) return fail("Missing student id");
 

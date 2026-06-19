@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { ok, fail, withSession, auditAfter, forbidden } from "@/lib/api";
 import { checkPermission } from "@/lib/permissions";
+import { cacheInvalidate } from "@/lib/cache";
 
 const VALID_TYPES = ["income", "expense", "transfer"] as const;
 const VALID_METHODS = ["cash", "bkash", "nagad", "bank", "wallet"] as const;
@@ -221,6 +222,10 @@ export const POST = withSession(async ({ session, req }) => {
       tamlik: txType === "transfer",
     },
   });
+
+  // Invalidate dashboard + analytics caches (fund balances + finance trends changed)
+  cacheInvalidate("dashboard:");
+  cacheInvalidate("analytics:");
 
   return ok(result.trx, 201);
 });

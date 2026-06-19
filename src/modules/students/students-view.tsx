@@ -1,6 +1,6 @@
 "use client";
-// Students main view: header, filters, table, pagination
-import { useEffect, useMemo, useState } from "react";
+// Students main view: header, filters, table, pagination, bulk actions
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus, Search, Users, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import { useStudents, useClasses } from "./use-students";
 import { StudentsTable } from "./students-table";
 import { StudentForm } from "./student-form";
 import { StudentProfileView } from "./student-profile-view";
+import { BulkActionsBar } from "./bulk-actions-bar";
 import type { Student } from "./types";
 
 const ISLAMIC_PATTERN_STYLE: React.CSSProperties = {
@@ -48,6 +49,34 @@ export function StudentsView() {
 
   // 360° profile view: when set, replaces the list with the detail view
   const [viewingStudentId, setViewingStudentId] = useState<string | null>(null);
+
+  // Bulk selection state — set of student IDs (persists across pages by default)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback((ids: string[]) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      const allOnPage = ids.every((id) => next.has(id));
+      if (allOnPage) {
+        // Deselect only the visible-page ids
+        ids.forEach((id) => next.delete(id));
+      } else {
+        ids.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
 
   // Debounced search — also resets to page 1 when search term changes
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -204,12 +233,25 @@ export function StudentsView() {
         </div>
       )}
 
+      {/* Bulk actions bar (renders only when 1+ students selected) */}
+      <BulkActionsBar
+        selectedIds={selectedIds}
+        onClear={clearSelection}
+        onActionComplete={() => {
+          clearSelection();
+          refetch();
+        }}
+      />
+
       {/* Table */}
       <StudentsTable
         students={data?.items ?? []}
         loading={isLoading}
         onView={handleView}
         onEdit={handleEdit}
+        selectedIds={selectedIds}
+        onToggleSelect={toggleSelect}
+        onToggleSelectAll={toggleSelectAll}
       />
 
       {/* Pagination */}

@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { ok, fail, withSession, auditAfter, forbidden } from "@/lib/api";
 import { checkPermission } from "@/lib/permissions";
+import { cacheInvalidate } from "@/lib/cache";
 
 // GET /api/students?search=&classId=&gender=&page=1&limit=20
 export const GET = withSession(async ({ session, req }) => {
@@ -128,6 +129,9 @@ export const POST = withSession(async ({ session, req }) => {
     entityName: student.name,
     details: { rollNo: student.rollNo, classId: student.classId },
   });
+
+  // Invalidate dashboard cache (student count changed)
+  cacheInvalidate("dashboard:");
 
   return ok(student, 201);
 });

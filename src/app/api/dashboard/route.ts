@@ -1,7 +1,12 @@
 // GET /api/dashboard — aggregated tenant stats for the dashboard home screen
+// Cached in-memory for 30 seconds per tenant (cacheInvalidate("dashboard:") on mutations).
+import { NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
-import { ok, unauthorized } from "@/lib/api";
+import { unauthorized } from "@/lib/api";
+import { cacheWrap, TTL } from "@/lib/cache";
+
+export const dynamic = "force-dynamic";
 
 const FUND_TYPES = ["general", "lillah", "waqf", "zakat", "sadaqah"] as const;
 
@@ -23,15 +28,12 @@ function monthLabel(d: Date, locale: string): string {
   }
 }
 
-export async function GET() {
-  const session = await getSession();
-  if (!session) return unauthorized();
-  const { tenantId } = session;
+async function computeDashboard(tenantId: string) {
   const now = new Date();
   const d30 = new Date(now.getTime() - 30 * 24 * 3600 * 1000);
   const d7 = startOfDay(new Date(now.getTime() - 6 * 24 * 3600 * 1000));
 
-  // Parallel aggregations — all filtered by tenantId for row-level isolation
+  // All queries in parallel — single round-trip to SQLite
   const [
     studentAgg,
     hafizCount,
@@ -41,11 +43,10 @@ export async function GET() {
     recentNotices,
     attendance7d,
     feeCollections6m,
+    activeStudents,
+    hafizStudents,
   ] = await Promise.all([
-    db.student.aggregate({
-      where: { tenantId },
-      _count: { _all: true },
-    }),
+    db.student.aggregate({ where: { tenantId }, _count: { _all: true } }),
     db.hifzRecord.count({ where: { tenantId, recordedAt: { gte: d30 } } }),
     db.teacher.count({ where: { tenantId } }),
     db.fund.findMany({ where: { tenantId }, select: { type: true, balance: true } }),
@@ -72,10 +73,6 @@ export async function GET() {
       where: { tenantId, paidDate: { gte: new Date(now.getFullYear(), now.getMonth() - 5, 1) } },
       select: { paidAmount: true, paidDate: true },
     }),
-  ]);
-
-  // Students: total + active + hafiz (hafiz is boolean flag — count via separate query if needed)
-  const [activeStudents, hafizStudents] = await Promise.all([
     db.student.count({ where: { tenantId, isActive: true } }),
     db.student.count({ where: { tenantId, isHafiz: true } }),
   ]);
@@ -87,14 +84,12 @@ export async function GET() {
   }));
   const totalFunds = fundBreakdown.reduce((s, f) => s + f.balance, 0);
 
-  // Weekly attendance: build last 7 days buckets with present/total rate
+  // Weekly attendance buckets
   const dayBuckets: { date: string; present: number; total: number; rate: number }[] = [];
   for (let i = 6; i >= 0; i--) {
     const day = startOfDay(new Date(now.getTime() - i * 24 * 3600 * 1000));
     const next = new Date(day.getTime() + 24 * 3600 * 1000);
-    const dayRecords = attendance7d.filter(
-      (a) => a.date >= day && a.date < next
-    );
+    const dayRecords = attendance7d.filter((a) => a.date >= day && a.date < next);
     const present = dayRecords.filter((a) => a.status === "present" || a.status === "late").length;
     const total = dayRecords.length;
     dayBuckets.push({
@@ -105,8 +100,7 @@ export async function GET() {
     });
   }
 
-  // Fee collection: group by month for last 6 months
-  const locale = "en";
+  // Fee collection: 6-month monthly buckets
   const feeMonthly: { month: string; amount: number }[] = [];
   for (let i = 5; i >= 0; i--) {
     const mStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -114,10 +108,10 @@ export async function GET() {
     const sum = feeCollections6m
       .filter((f) => f.paidDate && f.paidDate >= mStart && f.paidDate < mEnd)
       .reduce((s, f) => s + (f.paidAmount || 0), 0);
-    feeMonthly.push({ month: monthLabel(mStart, locale), amount: sum });
+    feeMonthly.push({ month: monthLabel(mStart, "en"), amount: sum });
   }
 
-  return ok({
+  return {
     students: {
       total: studentAgg._count._all,
       active: activeStudents,
@@ -142,5 +136,25 @@ export async function GET() {
       publishedAt: n.publishedAt,
     })),
     feeMonthly,
-  });
+  };
+}
+
+export async function GET() {
+  const session = await getSession();
+  if (!session) return unauthorized();
+  const { tenantId } = session;
+
+  // Read-through cache: 30s TTL, per-tenant key isolation.
+  const data = await cacheWrap(
+    `dashboard:${tenantId}`,
+    TTL.DASHBOARD,
+    () => computeDashboard(tenantId)
+  );
+
+  // `Cache-Control: no-store` keeps the browser from caching the response —
+  // we want only the server-side in-memory cache to serve fresh data on refresh.
+  return NextResponse.json(
+    { ok: true, data },
+    { status: 200, headers: { "Cache-Control": "no-store" } }
+  );
 }

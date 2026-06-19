@@ -1,7 +1,8 @@
 // Website CMS API — GET (public preview data) + POST (update tenant + optionally post a notice)
 // All scoped to session.tenantId.
 import { db } from "@/lib/db";
-import { ok, fail, withSession, auditAfter } from "@/lib/api";
+import { ok, fail, withSession, auditAfter, forbidden } from "@/lib/api";
+import { checkPermission } from "@/lib/permissions";
 
 // GET /api/website — returns everything the public website preview needs
 export const GET = withSession(async ({ session }) => {
@@ -63,6 +64,10 @@ type UpdateBody = {
 
 // POST /api/website — update tenant contact info; optionally publish an announcement notice
 export const POST = withSession(async ({ session, req }) => {
+  // RBAC: require website:update permission
+  const allowed = await checkPermission(session, "website", "update");
+  if (!allowed) return forbidden("You don't have permission to update website settings");
+
   const body = (await req.json().catch(() => ({}))) as UpdateBody;
   const data: Record<string, unknown> = {};
 

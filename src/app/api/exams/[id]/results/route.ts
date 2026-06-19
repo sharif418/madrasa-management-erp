@@ -5,7 +5,8 @@
 // No unique constraint on (examId, studentId, subject) → use deleteMany + createMany in a
 // transaction scoped to the provided items.
 import { db } from "@/lib/db";
-import { ok, fail, notFound, withSession, auditAfter } from "@/lib/api";
+import { ok, fail, notFound, withSession, auditAfter, forbidden } from "@/lib/api";
+import { checkPermission } from "@/lib/permissions";
 
 const TERMS_LIST = ["first", "second", "final"] as const;
 
@@ -55,6 +56,10 @@ type PostBody = { results?: ResultInput[] };
 
 // POST — bulk upsert: delete existing results for given (studentId, subject) pairs, then create
 export const POST = withSession(async ({ session, req, params }) => {
+  // RBAC: require exams:create permission
+  const allowed = await checkPermission(session, "exams", "create");
+  if (!allowed) return forbidden("You don't have permission to record exam results");
+
   const id = params?.id;
   if (!id) return fail("Missing exam id");
 

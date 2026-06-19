@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { ok, fail, withSession, auditAfter, forbidden } from "@/lib/api";
 import { checkPermission } from "@/lib/permissions";
+import { cacheInvalidate } from "@/lib/cache";
 
 // Allowed types & statuses (kept in original Islamic form across all languages)
 const TYPES = new Set(["sabak", "sabaq_para", "dhor"]);
@@ -134,6 +135,10 @@ export const POST = withSession(async ({ session, req }) => {
     entityName: `${student.name} — ${type} (Para ${para})`,
     details: { type, paraNumber: para, status: created.status, studentId },
   });
+
+  // Invalidate dashboard + analytics caches (hifz stats changed)
+  cacheInvalidate("dashboard:");
+  cacheInvalidate("analytics:");
 
   return ok(created, 201);
 });

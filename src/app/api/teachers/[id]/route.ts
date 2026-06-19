@@ -5,7 +5,8 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
-import { ok, unauthorized, notFound, auditAfter } from "@/lib/api";
+import { ok, unauthorized, notFound, auditAfter, forbidden } from "@/lib/api";
+import { checkPermission } from "@/lib/permissions";
 
 const SPECIALIZATIONS = ["hifz", "fiqh", "tafsir", "arabic", "general"];
 
@@ -42,6 +43,9 @@ type UpdateInput = {
 export async function PUT(req: NextRequest, ctx: Ctx) {
   const session = await getSession();
   if (!session) return unauthorized();
+  // RBAC: require teachers:update permission
+  const allowed = await checkPermission(session, "teachers", "update");
+  if (!allowed) return forbidden("You don't have permission to update teachers");
   const { id } = await ctx.params;
   const existing = await getOwned(session, id);
   if (!existing) return notFound("Teacher not found");
@@ -83,6 +87,9 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
 export async function DELETE(_req: NextRequest, ctx: Ctx) {
   const session = await getSession();
   if (!session) return unauthorized();
+  // RBAC: require teachers:delete permission
+  const allowed = await checkPermission(session, "teachers", "delete");
+  if (!allowed) return forbidden("You don't have permission to delete teachers");
   const { id } = await ctx.params;
   const existing = await getOwned(session, id);
   if (!existing) return notFound("Teacher not found");

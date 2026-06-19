@@ -1,7 +1,8 @@
 // Billing API — GET (subscription status + usage + invoices) + POST (upgrade plan)
 // All scoped to session.tenantId. Mock — no real payment gateway integration.
 import { db } from "@/lib/db";
-import { ok, fail, withSession, auditAfter } from "@/lib/api";
+import { ok, fail, withSession, auditAfter, forbidden } from "@/lib/api";
+import { checkPermission } from "@/lib/permissions";
 
 type Plan = "trial" | "basic" | "pro" | "enterprise";
 
@@ -123,6 +124,10 @@ const ALLOWED_METHODS = ["bkash", "nagad", "bank", "card"];
 
 // POST /api/billing — upgrade/downgrade plan (mock — just updates tenant.plan)
 export const POST = withSession(async ({ session, req }) => {
+  // RBAC: require billing:update permission
+  const allowed = await checkPermission(session, "billing", "update");
+  if (!allowed) return forbidden("You don't have permission to manage billing");
+
   const body = (await req.json().catch(() => ({}))) as UpgradeBody;
 
   if (!ALLOWED_PLANS.includes(body.plan)) {

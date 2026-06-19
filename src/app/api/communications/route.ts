@@ -2,7 +2,8 @@
 // GET: recent notifications + 7-day activity + audience breakdown
 // POST: send a message (creates a Notification row, mock send)
 import { db } from "@/lib/db";
-import { ok, fail, withSession, auditAfter } from "@/lib/api";
+import { ok, fail, withSession, auditAfter, forbidden } from "@/lib/api";
+import { checkPermission } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -115,6 +116,10 @@ export const GET = withSession(async ({ session }) => {
 
 // POST /api/communications — send a message (mock; just creates a Notification row)
 export const POST = withSession(async ({ session, req }) => {
+  // RBAC: require communications:create permission
+  const allowed = await checkPermission(session, "communications", "create");
+  if (!allowed) return forbidden("You don't have permission to send communications");
+
   const body = await req.json().catch(() => ({}));
   const title = typeof body.title === "string" ? body.title.trim() : "";
   const message = typeof body.body === "string" ? body.body.trim() : "";

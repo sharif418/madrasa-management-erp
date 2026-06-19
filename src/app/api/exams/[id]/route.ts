@@ -1,7 +1,8 @@
 // Exam by id — GET (with results + student names), PUT (audit), DELETE (cascade + audit)
 // Tenant-scoped via session.tenantId.
 import { db } from "@/lib/db";
-import { ok, fail, notFound, withSession, auditAfter } from "@/lib/api";
+import { ok, fail, notFound, withSession, auditAfter, forbidden } from "@/lib/api";
+import { checkPermission } from "@/lib/permissions";
 
 const TERMS = new Set(["first", "second", "final"]);
 const getOwned = (id: string, tenantId: string) =>
@@ -36,6 +37,10 @@ export const GET = withSession(async ({ session, params }) => {
 
 // PUT /api/exams/[id] — update fields, audit
 export const PUT = withSession(async ({ session, req, params }) => {
+  // RBAC: require exams:update permission
+  const allowed = await checkPermission(session, "exams", "update");
+  if (!allowed) return forbidden("You don't have permission to update exams");
+
   const id = params?.id;
   if (!id) return fail("Missing exam id");
   const existing = await getOwned(id, session.tenantId);
@@ -82,6 +87,10 @@ export const PUT = withSession(async ({ session, req, params }) => {
 
 // DELETE /api/exams/[id] — cascade delete results + audit (transactional)
 export const DELETE = withSession(async ({ session, params }) => {
+  // RBAC: require exams:delete permission
+  const allowed = await checkPermission(session, "exams", "delete");
+  if (!allowed) return forbidden("You don't have permission to delete exams");
+
   const id = params?.id;
   if (!id) return fail("Missing exam id");
   const existing = await getOwned(id, session.tenantId);
