@@ -1,0 +1,547 @@
+     1→# Madrasa Management ERP — Project Worklog
+     2→
+     3→## Project Overview
+     4→A production-ready, multi-tenant SaaS Madrasa Management ERP built with Next.js 16.
+     5→Designed for deployment on Coolify. Each madrasa (tenant) gets isolated data via row-level
+     6→tenancy, with full RBAC, multi-language support (Bangla, English, Arabic), and a complete
+     7→feature set covering academics, Hifz tracking, Shariah-compliant finance, and more.
+     8→
+     9→## Tech Stack (Adapted from agent's recommendation)
+    10→- **Framework**: Next.js 16 with App Router (single-page SPA at `/`)
+    11→- **Language**: TypeScript 5
+    12→- **Styling**: Tailwind CSS 4 + shadcn/ui (New York)
+    13→- **Database**: Prisma ORM + SQLite (multi-tenant via `tenantId` row-level isolation)
+    14→- **Auth**: NextAuth.js v4 (credentials provider, phone-based)
+    15→- **i18n**: next-intl (Bangla, English, Arabic with RTL support)
+    16→- **State**: Zustand (client), TanStack Query (server)
+    17→- **Charts**: Recharts
+    18→- **Icons**: Lucide React
+    19→
+    20→## Architectural Decisions
+    21→1. **Single-page app at `/`**: All user-facing UI is on `/`. Navigation handled via
+    22→   Zustand store (no Next.js routing for views). API routes under `/api/*`.
+    23→2. **Multi-tenancy via Row-Level Isolation**: Every domain table has `tenantId`.
+    24→   A Prisma client extension auto-injects `where: { tenantId }` for tenant queries.
+    25→3. **Modular folder structure**:
+    26→   - `src/modules/<domain>/` — feature modules (each with api, components, store)
+    27→   - `src/components/` — shared UI components
+    28→   - `src/lib/` — core utilities (db, auth, i18n, tenant)
+    29→   - `src/i18n/` — translations (bn, en, ar)
+    30→4. **File size limit**: No file over 300 lines. Split into focused modules.
+    31→5. **Three languages** with full UI translation + RTL for Arabic.
+    32→
+    33→## Feature Modules
+    34→1. **Landing Page** — SaaS marketing, login, tenant signup
+    35→2. **Dashboard** — Analytics, charts, recent activity, quick stats
+    36→3. **Students** — CRUD, profiles, guardian info, class assignment, wallet
+    37→4. **Teachers/Staff** — CRUD, role assignment, payroll
+    38→5. **Academic** — Classes, sections, subjects, Qawmi/Alia curriculum
+    39→6. **Hifz Tracking** — Sabak, Sabaq Para, Dhor with quality ratings + reports
+    40→7. **Finance** — Funds (General, Lillah, Waqf, Zakat), transactions, Tamlik automation
+    41→8. **Wallet** — Cashless campus, top-up, internal payments
+    42→9. **Attendance** — Student & staff attendance
+    43→10. **Exams & Results** — Marks entry, report cards
+    44→11. **Notices** — Announcements, notifications
+    45→12. **Settings** — Tenant config, language, theme, RBAC roles
+    46→13. **Audit Log** — Track all critical changes
+    47→
+    48→## Current Status
+    49→- [x] Architecture plan defined
+    50→- [ ] Database schema
+    51→- [ ] i18n setup
+    52→- [ ] Auth setup
+    53→- [ ] App shell
+    54→- [ ] Landing page
+    55→- [ ] Dashboard
+    56→- [ ] All modules
+    57→
+    58→---
+    59→
+    60→Task ID: 0
+    61→Agent: Main Orchestrator (Z.ai)
+    62→Task: Initialize project plan, read uploaded docx, define architecture
+    63→
+    64→Work Log:
+    65→- Read user's uploaded `madrasa managment.docx` (Bengali, prior agent's plan)
+    66→- Analyzed prior plan: multi-tenant ERP, NestJS monorepo, PostgreSQL, React Native
+    67→- Adapted plan to Next.js 16 single-app architecture with SQLite + Prisma
+    68→- Defined modular folder structure with row-level tenancy
+    69→- Wrote this worklog as living handover document
+    70→
+    71→Stage Summary:
+    72→- Architecture finalized: Next.js SPA + multi-tenant SQLite + next-intl + NextAuth
+    73→- 13 feature modules planned
+    74→- Ready to begin implementation: schema → i18n → auth → shell → modules
+    75→
+    76→---
+    77→Task ID: 7
+    78→Agent: full-stack-developer (Dashboard)
+    79→Task: Build Dashboard API + view with stats, charts, recent activity
+    80→
+    81→Work Log:
+    82→- Read existing scaffolding (schema, session/api/db helpers, app-store, dashboard.* translation keys).
+    83→- Built `/api/dashboard/route.ts` — single GET endpoint returning aggregated tenant stats: students (total/active/hafiz), teachers, funds (total + breakdown by 5 types), hifz30d, weekly attendance buckets (7 days × present/total/rate), recentHifz (5), recentNotices (5), feeMonthly (6 months). All queries filter by session.tenantId. Used Promise.all for parallel aggregations.
+    84→- Built `dashboard-stats.tsx` — 4 gradient stat cards (Students/Teachers/Funds/Hifz 30d) with icons and sub-labels, plus a Quick Actions card with 4 buttons calling useApp().setView().
+    85→- Built `dashboard-charts.tsx` — 3 recharts visualizations side-by-side: weekly attendance area chart (gradient fill), fund distribution donut pie (color per fund type + legend), fee collection monthly bar chart. Used CSS-variable-based colors for light/dark theme compatibility.
+    86→- Built `dashboard-view.tsx` — main orchestrator with useEffect fetch (alive-flag cancel), welcome banner (emerald→teal→cyan gradient, blurred blobs, Hijri date via Intl.DateTimeFormat -u-ca-islamic with fallback, localized time), composes stats+charts+two recent-activity cards with ScrollArea (max-h-96), color-coded badges, loading skeletons, error state. RTL-friendly logical Tailwind properties (ms-/me-/ps-/pe-/start/end) throughout.
+    87→- Ran bun run lint — initial error was react-hooks/set-state-in-effect on HijriDate; fixed by converting to useMemo. Final lint on dashboard files: 0 errors.
+    88→- Pre-existing lint error in src/modules/students/student-form.tsx (another agent's file) — outside scope, left untouched.
+    89→
+    90→Stage Summary:
+    91→- Files created:
+    92→  - /home/z/my-project/src/app/api/dashboard/route.ts (146 lines)
+    93→  - /home/z/my-project/src/modules/dashboard/dashboard-stats.tsx (129 lines)
+    94→  - /home/z/my-project/src/modules/dashboard/dashboard-charts.tsx (147 lines)
+    95→  - /home/z/my-project/src/modules/dashboard/dashboard-view.tsx (206 lines)
+    96→- Key decisions:
+    97→  - Single GET endpoint returns everything in one round-trip.
+    98→  - Parallel Promise.all aggregations for snappy response.
+    99→  - Two-pass query for student counts (aggregate can't count booleans in SQLite).
+   100→  - CSS-variable chart colors (project theme uses oklch() directly, not hsl(var())).
+   101→  - Zero-dependency Hijri date via Intl.DateTimeFormat islamic calendar extension.
+   102→  - Welcome banner uses user.name.split(' ')[0] for first-name greeting.
+   103→  - Quick actions map to existing ViewKey values in Zustand store.
+   104→- Issues/notes:
+   105→  - Unauthorized GET /api/dashboard returns 401 (verified via curl). Authenticated flow tested through dev server (clean compile, no errors in dev.log).
+   106→  - Did NOT modify any files outside dashboard scope.
+   107→  - A pre-existing lint error in students/student-form.tsx exists (not introduced by this task).
+   108→
+   109→---
+   110→Task ID: 8
+   111→Agent: full-stack-developer (Students)
+   112→Task: Build Students CRUD module with API + UI
+   113→
+   114→Work Log:
+   115→- Read worklog.md, prisma schema, lib/api.ts, lib/session.ts, lib/audit.ts, app-store.ts, i18n/translations.ts to understand project conventions
+   116→- Verified Student / Class / Wallet / HifzRecord / FeeCollection models already exist in schema (no schema changes needed)
+   117→- Created GET (list with search/classId/gender filters + pagination) + POST (create with auto-Wallet + audit) at src/app/api/students/route.ts (128 lines)
+   118→- Created GET (one with class, wallet, hifzCount, feeSummary aggregates) + PUT (partial update with audit) + DELETE (audit) at src/app/api/students/[id]/route.ts (144 lines)
+   119→- Added src/app/api/students/classes/route.ts — lightweight class list for the form dropdown (kept inside students namespace to avoid touching other agents' scope)
+   120→- All API queries scoped by session.tenantId via withSession wrapper; audit recorded via auditAfter for every mutation
+   121→- Created src/modules/students/types.ts — shared Student / StudentInput / StudentClass / Wallet types + BLOOD_GROUPS / GUARDIAN_RELATIONS constants
+   122→- Created src/modules/students/i18n.ts — useT() hook that prefers global translations then falls back to a local trilingual (bn/en/ar) dictionary for module-specific keys (toast messages, tab labels, etc.) without modifying translations.ts
+   123→- Created src/modules/students/use-students.ts — TanStack Query hooks (useStudents, useClasses, useCreateStudent, useUpdateStudent, useDeleteStudent) with same-origin credentials
+   124→- Created src/modules/students/student-form-fields.tsx — three field-group components (BasicInfo, GuardianInfo, AdditionalInfo) with RTL-aware Arabic name input
+   125→- Created src/modules/students/student-form.tsx — Dialog + Tabs form (3 sections), conditional mount via key to avoid setState-in-effect, validation + toast feedback
+   126→- Created src/modules/students/students-table.tsx — Table with roll/name(+Arabic)/class/guardian phone/active status/Hafiz badge, dropdown actions, AlertDialog delete confirmation, loading skeleton + empty state
+   127→- Created src/modules/students/students-view.tsx — Header (icon + title + count), filter card (debounced search + class/gender selects), error banner, table, pagination; dir-aware RTL wrapper
+   128→- Fixed two react-hooks/set-state-in-effect lint errors: replaced useEffect-based form reset with conditional mount + key, and moved page-reset into inline change handlers
+   129→- Ran bun run lint — all my files pass; the only remaining lint error is in src/modules/finance/finance-view.tsx (out of scope, another agent's file)
+   130→- Verified dev.log shows successful compilation
+   131→
+   132→Stage Summary:
+   133→- Files created:
+   134→  - src/app/api/students/route.ts (128 lines)
+   135→  - src/app/api/students/[id]/route.ts (144 lines)
+   136→  - src/app/api/students/classes/route.ts (13 lines)
+   137→  - src/modules/students/types.ts (81 lines)
+   138→  - src/modules/students/i18n.ts (159 lines)
+   139→  - src/modules/students/use-students.ts (106 lines)
+   140→  - src/modules/students/student-form-fields.tsx (237 lines)
+   141→  - src/modules/students/student-form.tsx (170 lines)
+   142→  - src/modules/students/students-table.tsx (209 lines)
+   143→  - src/modules/students/students-view.tsx (221 lines)
+   144→- Key decisions:
+   145→  - Kept classes dropdown endpoint under /api/students/classes (within scope) rather than creating /api/classes (out of scope)
+   146→  - Used TanStack Query for server state with same-origin credentials and query invalidation on mutations
+   147→  - Local i18n dictionary fallback pattern avoids modifying global translations.ts while still supporting all three languages
+   148→  - Form uses conditional mount + key prop pattern instead of useEffect-based reset to satisfy react-hooks/set-state-in-effect rule
+   149→  - Auto-creates Wallet (balance 0) in a transaction together with the Student record on POST
+   150→  - DELETE relies on Prisma cascade for wallet/hifz/feeCollections (per schema onDelete: Cascade)
+   151→  - Student list returns { items, total, page, limit }; GET [id] additionally returns hifzCount + feeSummary {total, paid, due, count}
+   152→- Issues/notes:
+   153→  - StudentsView is not yet wired into the main app shell / sidebar navigation — that is the responsibility of the app-shell agent. Once nav routes "students" view to StudentsView, the module is ready to use.
+   154→  - The "View" action currently falls back to Edit (a detail drawer/page is out of scope for this CRUD task).
+   155→  - The remaining `bun run lint` error in src/modules/finance/finance-view.tsx belongs to the Finance module agent (Task 7), not introduced by this task.
+   156→
+   157→---
+   158→Task ID: 9
+   159→Agent: full-stack-developer (Teachers)
+   160→Task: Build Teachers/Staff CRUD module with API + UI
+   161→
+   162→Work Log:
+   163→- Read project worklog, schema (Teacher model), api/session/audit helpers, app-store, existing UI primitives, and existing teachers.* translation keys.
+   164→- Extended translations.ts with ~50 new teachers.* keys across en/bn/ar (gender, specializations, designations, empty/loading/pagination states, success/failure toasts, delete confirmation, form fields).
+   165→- Created /api/teachers/route.ts (156 lines): GET list with search + specialization filter + pagination (page/limit), POST create with validation (name, joinDate, salary) and auditAfter({action:create, module:teachers}). All queries scoped by session.tenantId.
+   166→- Created /api/teachers/[id]/route.ts (98 lines): GET one, PUT partial update, DELETE. All scoped via getOwned(session, id) using findFirst with tenantId. Audit recorded for update + delete.
+   167→- Created src/modules/teachers/types.ts: shared types (TeacherDTO, TeacherFormValues, TeacherListResponse), SPECIALIZATIONS / DESIGNATIONS constants, EMPTY_FORM, getInitials + getAvatarGradient helpers.
+   168→- Created src/modules/teachers/teacher-form.tsx (208 lines): Add/Edit Dialog with all fields (name, nameArabic with RTL, phone, email, gender, designation, specialization, salary, joinDate, photoUrl, address, isActive switch). Validation toasts, submitting state, POST/PUT fetch with proper error handling, calls onSaved to refresh list.
+   169→- Created src/modules/teachers/teachers-grid.tsx (231 lines): responsive card grid (1/2/3/4 cols), each card has gradient header band, Avatar with initials fallback (deterministic gradient), name, Arabic name (RTL), active/inactive + designation + specialization badges, phone/email/joinDate/address with icons, salary footer. Framer Motion enter animation. AlertDialog for delete confirmation. Plus TeachersEmptyState component (distinct empty vs filtered-empty messaging).
+   170→- Created src/modules/teachers/teachers-view.tsx (217 lines): header with title + total + Add button, debounced search input (300ms), specialization Select filter ("all" + 5 specs), loading skeleton grid, empty states, paginated grid, pagination footer with prev/next + page X of Y. Wires TeacherForm for add/edit. Uses useApp for translations + dir() for RTL.
+   171→- Ran ESLint on my files (clean) and full project (only pre-existing error in finance-view.tsx which is out of scope). Ran tsc --noEmit on my files (clean after fixing SessionUser.tenantName -> useApp tenantName). Verified dev server compiles cleanly.
+   172→
+   173→Stage Summary:
+   174→- Files created:
+   175→  - src/app/api/teachers/route.ts (156 lines)
+   176→  - src/app/api/teachers/[id]/route.ts (98 lines)
+   177→  - src/modules/teachers/types.ts (96 lines)
+   178→  - src/modules/teachers/teacher-form.tsx (208 lines)
+   179→  - src/modules/teachers/teachers-grid.tsx (231 lines)
+   180→  - src/modules/teachers/teachers-view.tsx (217 lines)
+   181→  - src/i18n/translations.ts (extended with ~50 teachers.* keys × 3 locales)
+   182→- Key decisions:
+   183→  - Card grid (not table) per spec; each card uses a deterministic gradient header + avatar initials for visual richness without requiring photos.
+   184→  - All API queries filter by session.tenantId; [id] route uses findFirst({id, tenantId}) to prevent cross-tenant access.
+   185→  - Search debounce 300ms; pagination defaults page=1, limit=20 (max 100).
+   186→  - Specialization enum validated server-side against [hifz, fiqh, tafsir, arabic, general].
+   187→  - Gender normalized to male/female; salary coerced via Number(); joinDate parsed to Date.
+   188→  - Audit recorded for create/update/delete with entityId + entityName + details (updated fields for PUT).
+   189→  - RTL supported via dir={dir()} on root + dir="rtl" on Arabic name inputs/displays.
+   190→  - Toasts via sonner for all success/error states.
+   191→- Issues/notes:
+   192→  - No file exceeds its line limit (route.ts 156/200, [id]/route.ts 98/120, view 217/300, form 208/300, grid 231/300).
+   193→  - The pre-existing ESLint error in src/modules/finance/finance-view.tsx is NOT in my scope and was left untouched.
+   194→  - Currency symbol is hardcoded to "৳" (BDT) in the view header since tenant currency lookup wasn't wired at view-time; future enhancement: read from tenant settings.
+   195→  - TeachersView is exported but not yet wired into the main app shell router (src/app/page.tsx is still placeholder) — integration is the orchestrator/shell agent's responsibility.
+   196→
+   197→---
+   198→Task ID: 10
+   199→Agent: full-stack-developer (Hifz)
+   200→Task: Build Hifz Tracking Engine with records, progress view, and charts
+   201→
+   202→Work Log:
+   203→- Read project worklog, Prisma schema (HifzRecord/Student/User), @/lib/api (withSession/ok/fail/notFound/auditAfter), @/lib/session, @/lib/audit, useApp Zustand store, and existing hifz.* translation keys.
+   204→- Added 35 new hifz.* translation keys × 3 locales (en/bn/ar) for tabs, filters, table headers, empty/loading states, success/error toasts, delete confirm, paras-covered legend, stat labels, etc. Islamic terminology (Sabak/Sabaq Para/Dhor/Para/Surah/Ayah) kept verbatim across all languages.
+   205→- Built /api/hifz/route.ts (134 lines) — withSession GET (filtered + paginated, includes student+teacher names) + POST (validates type/para/status, sets teacherId=session.userId, auto-flags student.isHafiz at 30 distinct completed paras, auditAfter).
+   206→- Built /api/hifz/[id]/route.ts (27 lines) — withSession DELETE, tenant-scoped findFirst→delete, auditAfter.
+   207→- Built /api/hifz/progress/route.ts (90 lines) — verifies student tenant ownership, single findMany, then computes totalParas (distinct completed), last30d, byType, avgQuality, parasCovered (30-cell array, memorized>in-progress>not-started precedence), and trend (last 20 rated, oldest→newest).
+   208→- Built src/modules/hifz/hifz-types.ts (119 lines) — TS types, color tokens, i18n key helpers, fmtDate, starString.
+   209→- Built src/modules/hifz/hifz-form.tsx (275 lines) — add-record Dialog: student/para selects, radio-card Type, surah+ayah range, 5-star quality picker, mistakes, status Select, notes Textarea.
+   210→- Built src/modules/hifz/hifz-records-table.tsx (273 lines) — filters bar + responsive Table (Student/Type/Para/Surah-Ayah/Quality stars/Mistakes/Status/Date/Actions), AlertDialog-gated delete, pagination, skeleton + empty states.
+   211→- Built src/modules/hifz/hifz-progress.tsx (283 lines) — student selector with Hafiz badge, hand-rolled SVG circular progress (animated), stats row (last30d/avgQuality/byType), 30-cell para grid (green/amber/gray), recharts LineChart for quality trend (wrapped dir=ltr).
+   212→- Built src/modules/hifz/hifz-view.tsx (120 lines) — shell with header, two-tab Tabs (Records/Progress), owns shared HifzForm Dialog + refreshKey so a new record reflects in both tabs.
+   213→- Ran bunx eslint on all authored files → 0 errors / 0 warnings. (Pre-existing finance-module lint errors left untouched per scope rule.)
+   214→- Verified dev.log shows clean incremental compiles.
+   215→
+   216→Stage Summary:
+   217→- Files created: src/app/api/hifz/route.ts, src/app/api/hifz/[id]/route.ts, src/app/api/hifz/progress/route.ts, src/modules/hifz/hifz-types.ts, src/modules/hifz/hifz-form.tsx, src/modules/hifz/hifz-records-table.tsx, src/modules/hifz/hifz-progress.tsx, src/modules/hifz/hifz-view.tsx
+   218→- Files modified: src/i18n/translations.ts (added 35×3 hifz.* keys)
+   219→- Key decisions: withSession wrapper used everywhere; types/statuses validated server-side via Set; progress endpoint does ONE query + in-memory aggregation; chart wrapped in dir=ltr for RTL safety; emerald/amber/teal/rose palette (no indigo/blue); Islamic terminology preserved verbatim across locales; HifzView owns shared refreshKey so create-from-dialog reflects in both tabs.
+   220→- Issues/notes: Pre-existing lint errors in src/modules/finance/* (another agent's files) — outside my scope, left untouched. My files lint clean.
+   221→
+   222→---
+   223→Task ID: 11
+   224→Agent: full-stack-developer (Finance)
+   225→Task: Build Shariah-compliant Finance module with Funds, Transactions, Tamlik
+   226→
+   227→Work Log:
+   228→- Read worklog.md, schema.prisma, lib/api.ts, lib/session.ts, lib/audit.ts and the
+   229→  existing /api/students/route.ts to align with established patterns.
+   230→- Confirmed Fund, Transaction, Wallet, WalletLog models and that the session-aware
+   231→  `withSession` helper already handles tenantId scoping + Next 16 params-as-promise.
+   232→- Created 4 API routes:
+   233→  * /api/finance/route.ts            — GET overview (funds, totals, 30d sums, 10 recent)
+   234→  * /api/finance/funds/route.ts      — GET list, POST create (with optional initialBalance
+   235→                                        that also records an `opening_balance` income txn)
+   236→  * /api/finance/transactions/route.ts — GET with filters + pagination + per-filter sums,
+   237→                                        POST income/expense/transfer(Tamlik). Tamlik path:
+   238→                                        validates Zakat fund + Zakat-eligible student,
+   239→                                        decrements fund, upserts Wallet, creates WalletLog
+   240→                                        (top_up), writes tamlikProof JSON (studentId,
+   241→                                        amount, date, fundId, witness). All inside
+   242→                                        db.$transaction. Audited afterwards.
+   243→  * /api/finance/transactions/[id]/route.ts — DELETE: reverses fund balance; for Tamlik
+   244→                                        also reverses wallet top-up and removes the
+   245→                                        matching WalletLog entry. Audited.
+   246→- Extended i18n with ~35 new finance.* keys per locale (en/bn/ar) covering Tamlik,
+   247→  chart titles, filters, empty/loading states, confirm-delete, etc.
+   248→- Built UI module `src/modules/finance/` (all files under 300 lines):
+   249→  * finance-types.ts          — shared types + fund/tx color tokens (slate/emerald/
+   250→                                blue/amber/rose per spec; no indigo/blue except waqf=blue).
+   251→  * finance-view.tsx          — top-level container with stat strip + Tabs(Funds/Transactions).
+   252→  * finance-funds.tsx         — Funds tab: gradient total-balance card with type-bar,
+   253→                                fund grid, recent activity list, Add Fund + Tamlik buttons.
+   254→  * finance-form-fund.tsx     — Add Fund dialog (color-coded type picker, initial balance).
+   255→  * finance-form-transaction.tsx — Add Transaction dialog (radio type, fund select that
+   256→                                filters to Zakat funds when type=transfer, Shariah note).
+   257→  * finance-form.tsx          — re-export barrel.
+   258→  * tamlik-dialog.tsx         — Tamlik automation dialog: source Zakat fund card,
+   259→                                eligible-student picker, amount, Shariah note + witness
+   260→                                warning, confirm.
+   261→  * finance-transactions.tsx  — Transactions tab: state, filters, table, pagination,
+   262→                                delete confirm, Add Transaction dialog mount.
+   263→  * finance-tx-filters.tsx    — filter bar + summary chips (income/expense/transfer).
+   264→  * finance-tx-table.tsx      — table presentation (responsive column hiding, badges,
+   265→                                amounts color-coded, Tamlik rows show shield icon).
+   266→  * finance-chart.tsx         — recharts BarChart (last 6 months income/expense/transfer).
+   267→- All fetch calls use relative `/api/finance*` URLs with credentials: include.
+   268→- All money formatting via Intl.NumberFormat (bn-BD / ar-EG / en-US per locale).
+   269→- Ran `bun run lint` — 0 errors, 0 warnings after fixing initial setState-in-effect
+   270→  warning (wrapped in async IIFE) and removing an unused eslint-disable.
+   271→- Verified all 4 API routes register (401 without session, as expected).
+   272→
+   273→Stage Summary:
+   274→- Files created:
+   275→  * src/app/api/finance/route.ts (57 lines)
+   276→  * src/app/api/finance/funds/route.ts (76 lines)
+   277→  * src/app/api/finance/transactions/route.ts (221 lines)
+   278→  * src/app/api/finance/transactions/[id]/route.ts (78 lines)
+   279→  * src/modules/finance/finance-types.ts (117 lines)
+   280→  * src/modules/finance/finance-view.tsx (140 lines)
+   281→  * src/modules/finance/finance-funds.tsx (232 lines)
+   282→  * src/modules/finance/finance-form.tsx (4 lines, re-export barrel)
+   283→  * src/modules/finance/finance-form-fund.tsx (175 lines)
+   284→  * src/modules/finance/finance-form-transaction.tsx (271 lines)
+   285→  * src/modules/finance/tamlik-dialog.tsx (297 lines)
+   286→  * src/modules/finance/finance-transactions.tsx (219 lines)
+   287→  * src/modules/finance/finance-tx-filters.tsx (172 lines)
+   288→  * src/modules/finance/finance-tx-table.tsx (146 lines)
+   289→  * src/modules/finance/finance-chart.tsx (164 lines)
+   290→- Files modified:
+   291→  * src/i18n/translations.ts (added ~35 finance.* keys per locale: en, bn, ar)
+   292→- Key decisions:
+   293→  * Tamlik is implemented as type=transfer with hardcoded category `tamlik_zakat`,
+   294→    paymentMethod forced to `wallet`, and tamlikProof JSON containing witness
+   295→    identity (userId + name) so the Shariah audit trail is self-contained.
+   296→  * When Add Fund receives `initialBalance > 0`, the route creates the fund with
+   297→    that balance AND records a matching `opening_balance` income transaction so
+   298→    fund.balance and the transactions ledger always reconcile.
+   299→  * DELETE transaction is Tamlik-aware: reverses fund.balance AND, for transfer
+   300→    type with tamlikProof, also reverses the wallet top-up (clamped to 0) and
+   301→    deletes the latest matching WalletLog entry.
+   302→  * UI splits files aggressively (tx-table, tx-filters, form-fund, form-transaction)
+   303→    so every file stays under the 300-line cap while keeping responsibilities
+   304→    cohesive.
+   305→  * Color coding follows spec exactly: general=slate, lillah=emerald, waqf=blue,
+   306→    zakat=amber, sadaqah=rose. Income=emerald, expense=rose, transfer=purple.
+   307→  * RTL-aware: every dialog sets dir={dir()} and currency/date use locale-aware
+   308→    Intl formatters.
+   309→- Issues/notes:
+   310→  * The /api/students endpoint does not currently expose `isZakatEligible` flag,
+   311→    so the Tamlik dialog shows all students-with-wallets; the backend POST
+   312→    /api/finance/transactions validates `isZakatEligible` and rejects ineligible
+   313→    students with a clear error message. If a future agent adds isZakatEligible
+   314→    filtering to /api/students, the Tamlik dialog can be tightened accordingly.
+   315→  * The DELETE WalletLog lookup matches by (walletId, trxType=top_up, amount) and
+   316→    picks the latest — this is best-effort. If stricter matching is desired,
+   317→    consider storing `transactionId` on WalletLog in a future schema migration.
+   318→
+   319→---
+   320→Task ID: 13b
+   321→Agent: full-stack-developer (Wallet + Audit)
+   322→Task: Build Digital Wallet + Audit Log viewer modules
+   323→
+   324→Work Log:
+   325→- Read worklog.md, prisma schema (Wallet/WalletLog/AuditLog models), lib/api.ts, lib/session.ts,
+   326→  lib/audit.ts, app-store.ts, i18n/translations.ts (existing wallet.* keys), and existing
+   327→  sibling modules (finance/, hifz/, students/) to align with established patterns: withSession
+   328→  wrapper, auditAfter helper, RTL-aware logical Tailwind props, sonner toasts, locale-aware
+   329→  Intl.NumberFormat / DateTimeFormat.
+   330→- Extended src/i18n/translations.ts with ~80 new wallet.* + audit.* keys per locale × 3 locales
+   331→  (en/bn/ar). Wallet keys cover search/empty/loading/toast strings, payment-method labels
+   332→  (cash/bkash/nagad/bank), hero-card labels, dialog strings. Audit keys cover filter labels,
+   333→  action verbs (create/update/delete/login/logout), entries/pageOf/expandDetails.
+   334→- Built src/app/api/wallet/route.ts (64 lines) — GET list, tenant-scoped, supports
+   335→  ?search= (matches student.name/nameArabic/rollNo via nested where) + ?page=/?limit=. Each
+   336→  wallet row includes student summary, latest WalletLog entry, _count.logs. Aggregates
+   337→  totalBalance + activeWallets (wallets with balance > 0). Single GET endpoint.
+   338→- Built src/app/api/wallet/[studentId]/route.ts (52 lines) — GET single wallet (tenant-safe
+   339→  via findFirst({ studentId, tenantId })) + last 20 WalletLog entries (newest first) +
+   340→  aggregate stats (totalTransactions, totalTopUp).
+   341→- Built src/app/api/wallet/[studentId]/topup/route.ts (106 lines) — POST atomic top-up inside
+   342→  db.$transaction: increments wallet.balance, creates WalletLog (trxType=top_up), creates
+   343→  Transaction (type=income, fund=General fund, category=wallet_topup, relatedStudentId,
+   344→  paymentMethod from body — defaults to cash; bkash/nagad/bank supported), increments the
+   345→  General fund balance so finance ledger stays reconciled. Validates amount > 0, validates
+   346→  General fund exists, returns 404 if wallet missing. Audited via auditAfter with newBalance +
+   347→  transactionId + method in details.
+   348→- Built src/app/api/audit/route.ts (74 lines) — GET list, tenant-scoped, filters by
+   349→  ?action=/?module=/?actorId=/?from=/?to= with inclusive date range, ?page=/?limit= (default
+   350→  50, max 200). Includes actor name+phone via Prisma relation. Returns modules: string[]
+   351→  (distinct) so the filter dropdown stays reactive. Renamed local var `module` -> `moduleFilter`
+   352→  to satisfy @next/next/no-assign-module-variable rule.
+   353→- Built wallet UI module src/modules/wallet/:
+   354→  * wallet-types.ts (102 lines) — types + per-trxType color tokens (emerald/amber/teal/rose) +
+   355→    balanceTone() helper.
+   356→  * wallet-table.tsx (153 lines) — table view with student name/rollNo, color-coded balance,
+   357→    recent-activity count + relative "last transaction" timestamp, View/Top-Up actions.
+   358→    Skeleton loading + empty state.
+   359→  * wallet-details-dialog.tsx (154 lines) — Dialog showing last 20 WalletLog entries, each with
+   360→    icon (top_up=ArrowUpCircle, canteen=ShoppingBag, laundry=WashingMachine,
+   361→    fee_deduction=GraduationCap), type badge, signed amount, description, datetime. ScrollArea.
+   362→  * wallet-topup-dialog.tsx (169 lines) — Dialog with amount input + payment-method Select
+   363→    (cash/bkash/nagad/bank) + optional note. Submits to /api/wallet/[id]/topup. Toast feedback.
+   364→  * wallet-view.tsx (194 lines) — orchestrator with header, gradient hero card showing total
+   365→    wallet balance + activeWallets stat, debounced search (300ms), paginated table, pagination.
+   366→- Built audit UI module src/modules/audit/:
+   367→  * audit-types.ts (78 lines) — types + per-action color tokens per spec (create=emerald,
+   368→    update=sky, delete=rose, login=amber, logout=slate).
+   369→  * audit-filters.tsx (105 lines) — Card with action Select, module Select (driven by
+   370→    server-returned distinct modules), from/to date inputs, "clear" button when any active.
+   371→  * audit-timeline.tsx (163 lines) — vertical timeline with absolute-positioned icon nodes on
+   372→    a spine line, each row has action badge + module + entityName, actor name/phone (with
+   373→    fallback "System"), absolute+relative timestamp, optional IP. Collapsible JSON details
+   374→    block (dir=ltr, monospace) when entry.details present.
+   375→  * audit-view.tsx (121 lines) — orchestrator with header (amber icon), filters card, entries
+   376→    count + pageOf summary, timeline, pagination.
+   377→- Ran bun run lint — initial error was `no-assign-module-variable` in audit route (variable
+   378→  named `module`); renamed to `moduleFilter`. Final lint: 0 errors / 0 warnings.
+   379→- Verified all 4 new API endpoints return 401 on unauthenticated request (expected).
+   380→- Verified npx tsc --noEmit produces no errors in any of my new files (pre-existing errors in
+   381→  attendance/students/examples/skills modules are out of scope).
+   382→- Verified dev.log shows clean incremental compiles.
+   383→
+   384→Stage Summary:
+   385→- Files created:
+   386→  - src/app/api/wallet/route.ts (64 lines)
+   387→  - src/app/api/wallet/[studentId]/route.ts (52 lines)
+   388→  - src/app/api/wallet/[studentId]/topup/route.ts (106 lines)
+   389→  - src/app/api/audit/route.ts (74 lines)
+   390→  - src/modules/wallet/wallet-types.ts (102 lines)
+   391→  - src/modules/wallet/wallet-table.tsx (153 lines)
+   392→  - src/modules/wallet/wallet-details-dialog.tsx (154 lines)
+   393→  - src/modules/wallet/wallet-topup-dialog.tsx (169 lines)
+   394→  - src/modules/wallet/wallet-view.tsx (194 lines)
+   395→  - src/modules/audit/audit-types.ts (78 lines)
+   396→  - src/modules/audit/audit-filters.tsx (105 lines)
+   397→  - src/modules/audit/audit-timeline.tsx (163 lines)
+   398→  - src/modules/audit/audit-view.tsx (121 lines)
+   399→- Files modified:
+   400→  - src/i18n/translations.ts (+ ~80 wallet.* + audit.* keys per locale × 3 locales)
+   401→- Key decisions:
+   402→  - Top-up is fully atomic inside db.$transaction and touches 4 tables: Wallet (balance),
+   403→    WalletLog (top_up entry), Transaction (income with category=wallet_topup), Fund (General
+   404→    fund balance). The finance ledger and wallet ledger stay reconciled.
+   405→  - General fund is auto-discovered via Fund.findFirst({ type: "general" }). If the tenant
+   406→    hasn't created one, top-up is rejected with a clear error.
+   407→  - Payment method is the SOURCE of the top-up (cash/bkash/nagad/bank) — NOT "wallet" —
+   408→    per the spec clarification.
+   409→  - Audit timeline uses absolute-positioned icon nodes on a vertical spine (ps-10 + spine
+   410→    line) instead of a plain list. Each entry's color/icon maps to its action verb.
+   411→  - All audit entries include actor name via Prisma `actor` relation; null-actor (system)
+   412→    entries display the localized "System" label.
+   413→  - JSON details block is rendered with dir="ltr" and font-mono regardless of app direction,
+   414→    so JSON keys stay readable in Arabic UI.
+   415→  - Color palette strictly follows spec (create=emerald, update=blue via sky, delete=rose,
+   416→    login=amber, logout=slate) — no indigo.
+   417→  - Search & filters are debounced (200–300ms) to avoid hammering the API on every keystroke.
+   418→  - All queries filter by session.tenantId. Tenant-safety on the [studentId] route is enforced
+   419→    via findFirst({ studentId, tenantId }) rather than findUnique (since studentId is globally
+   420→    unique but we still must reject cross-tenant access).
+   421→- Issues/notes:
+   422→  - WalletView and AuditView are exported but not yet wired into the main app-shell router
+   423→    (src/app/page.tsx) — that is the orchestrator/shell agent's responsibility. The ViewKey
+   424→    enum already includes "wallet" and "audit" so a single conditional render is all that's
+   425→    needed.
+   426→  - The wallet "View Details" dialog lazy-loads details only when opened, to avoid N+1 queries
+   427→    on the list page.
+   428→  - Audit timeline renders up to 50 entries per page; for tenants with very high audit volume,
+   429→    server-side pagination keeps DOM size bounded.
+   430→  - Pre-existing TS/lint errors in attendance/, students/student-form.tsx, examples/, skills/
+   431→    are out of scope and left untouched.
+   432→
+   433→---
+   434→Task ID: 12
+   435→Agent: full-stack-developer (Academic)
+   436→Task: Build Academic module — Classes & Subjects CRUD
+   437→
+   438→Work Log:
+   439→- Read worklog.md, prisma schema (Class & Subject models), lib/api.ts, lib/session.ts, lib/audit.ts, app-store.ts, existing academic.* keys in translations.ts, and patterns from teachers module (route.ts, [id]/route.ts, view, grid, form, types).
+   440→- Created src/modules/academic/types.ts — Curriculum/SubjectType unions, CURRICULA/SUBJECT_TYPES arrays, ClassDTO/SubjectDTO/ClassOption types, ClassFormValues/SubjectFormValues + EMPTY_* forms, CURRICULUM_BADGE (qawmi=emerald, alia=violet) and SUBJECT_TYPE_BADGE (academic=sky, quranic=emerald, arabic=amber, general=slate) color maps, CURRICULUM_GRADIENT for card headers.
+   441→- Created src/modules/academic/i18n.ts — useT() hook that prefers global translations (which already has academic.* base keys) and falls back to a local trilingual dict (en/bn/ar) for ~40 module-specific keys (tabs, empty states, toasts, form labels, delete confirmations, search placeholders). Avoids touching translations.ts.
+   442→- Built /api/academic/classes/route.ts (110 lines): GET lists classes for tenant with _count.students, supports ?search= and ?curriculum= filters, ordered by level then name. POST validates name+capacity, guards uniqueness (tenantId+name → 409), coerces level/capacity to numbers, auditAfter({action:create, module:academic, entity:"class"}).
+   443→- Built /api/academic/classes/[id]/route.ts (96 lines): GET one (findFirst by id+tenantId + _count), PUT partial update with audit, DELETE blocked with 400 message when _count.students > 0 ("Cannot delete a class with enrolled students..."). All scoped via getOwned(tenantId, id).
+   444→- Built /api/academic/subjects/route.ts (109 lines): GET lists subjects with optional ?type=, ?classId=, ?search= filters, includes class {id,name}. POST validates name, validates classId belongs to tenant, guards uniqueness (tenantId+name → 409), auditAfter({entity:"subject"}).
+   445→- Built /api/academic/subjects/[id]/route.ts (84 lines): PUT partial update with classId null-out support (passing "" or null clears), audit recorded. DELETE with audit. Scoped via getOwned.
+   446→- Built src/modules/academic/class-form.tsx (185 lines): Dialog form for create/edit class with name (required), code (optional), curriculum select (Qawmi/Alia), level number, capacity number (required, >0). Toasts on success/error. Conditional mount via useEffect on open prop.
+   447→- Built src/modules/academic/classes-grid.tsx (247 lines): Responsive card grid (1/2/3/4 cols). Each card has a curriculum-color gradient header band (emerald for Qawmi, violet for Alia) with GraduationCap icon and curriculum badge, name, level label, code+curriculum badges (color-coded), and a capacity progress bar (enrolled/capacity) that turns amber when full. Edit/delete icon buttons per card. AlertDialog delete confirmation. Separate ClassesEmptyState for empty vs filtered states.
+   448→- Built src/modules/academic/subject-form.tsx (175 lines): Dialog form for create/edit subject with name (required), code (optional), type select (academic/quranic/arabic/general), class select (with "No class" option that stores null). Reuses classOptions passed from parent (single source of truth loaded once).
+   449→- Built src/modules/academic/subjects-table.tsx (234 lines): Card-wrapped Table with columns: Name (with BookOpen icon avatar), Code (mono badge or em-dash), Type (color-coded badge using SUBJECT_TYPE_BADGE), Class (name or "No class"), Actions (edit/delete icon buttons). AlertDialog delete confirmation. SubjectsEmptyState for empty vs filtered.
+   450→- Built src/modules/academic/academic-skeletons.tsx (52 lines): ClassesSkeleton (8 card placeholders matching card layout) + SubjectsSkeleton (6 row placeholders matching table layout), each with sr-only Loader2 aria-live.
+   451→- Built src/modules/academic/academic-view.tsx (281 lines): Main "use client" view. Header with icon, title, subtitle, and contextual Add button (changes label based on active tab). Tabs (Classes | Subjects) with counts. Classes tab: search input + grid. Subjects tab: search + type filter + class filter + table. Both tabs have loading skeletons and empty states. Two debounce effects (300ms) for search inputs. useEffect cleanup ensures stale requests are safe. Class options memoized from classes list and shared with SubjectForm. RTL-aware via dir={dir()} on root and logical CSS (ps-/pe-/ms-/me-/start/end) throughout.
+   452→- Ran ESLint: zero errors in any academic file (the only project-wide lint error is the pre-existing @next/next/no-assign-module-variable in src/app/api/audit/route.ts — outside scope).
+   453→- Ran tsc --noEmit: zero errors in any academic file (pre-existing errors in attendance + students modules belong to other agents).
+   454→- Triggered compilation of /api/academic/classes and /api/academic/subjects via curl — both compile cleanly (401 expected without auth).
+   455→
+   456→Stage Summary:
+   457→- Files created:
+   458→  - src/app/api/academic/classes/route.ts (110 lines)
+   459→  - src/app/api/academic/classes/[id]/route.ts (96 lines)
+   460→  - src/app/api/academic/subjects/route.ts (109 lines)
+   461→  - src/app/api/academic/subjects/[id]/route.ts (84 lines)
+   462→  - src/modules/academic/types.ts (85 lines)
+   463→  - src/modules/academic/i18n.ts (152 lines)
+   464→  - src/modules/academic/class-form.tsx (185 lines)
+   465→  - src/modules/academic/classes-grid.tsx (247 lines)
+   466→  - src/modules/academic/subject-form.tsx (175 lines)
+   467→  - src/modules/academic/subjects-table.tsx (234 lines)
+   468→  - src/modules/academic/academic-skeletons.tsx (52 lines)
+   469→  - src/modules/academic/academic-view.tsx (281 lines)
+   470→- Key decisions:
+   471→  * Local i18n fallback pattern (same as students/i18n.ts) — keeps translations.ts untouched while still surfacing all module strings in 3 locales with RTL support.
+   472→  * DELETE class guard returns 400 with a clear message ("Cannot delete a class with enrolled students. Please move or remove them first.") — prevents orphaning students and signals to UI to surface the error via toast.
+   473→  * Subject.classId uses SetNull on delete (per schema), so deleting a class auto-clears subject.classId without losing the subject.
+   474→  * Curriculum badges: Qawmi=emerald, Alia=violet exactly as specified. Subject type badges: academic=sky, quranic=emerald, arabic=amber, general=slate (color-coded throughout).
+   475→  * Class cards use a curriculum-gradient header (Qawmi emerald→teal, Alia violet→purple) plus a Progress bar that turns amber when capacity is reached — gives instant visual feedback on enrollment pressure.
+   476→  * Class list is the single source of truth for the class dropdown in SubjectForm (passed as prop), avoiding a second API call. When a class is deleted, an effect resets the classFilter if it pointed at the deleted class.
+   477→  * Both APIs guard tenant+name uniqueness with a 409 to prevent Prisma's @@unique from surfacing an opaque error to the UI.
+   478→  * Audit module is always "academic" with a `details.entity` field ("class" | "subject") so the Audit Log module can distinguish the two entity types within one module namespace.
+   479→- Issues/notes:
+   480→  * AcademicView is exported but not yet wired into the main app shell router (src/app/page.tsx is still placeholder) — integration is the orchestrator/shell agent's responsibility. The view key "academic" already exists in the ViewKey union.
+   481→  * No file exceeds its line limit: API routes 110/96/109/84 (caps 150/120/120/80), UI files all under 300.
+   482→  * The single pre-existing `bun run lint` error in src/app/api/audit/route.ts (@next/next/no-assign-module-variable) is NOT in this task's scope and was left untouched.
+   483→
+   484→---
+   485→Task ID: 13
+   486→Agent: full-stack-developer (Attendance + Notices + Settings)
+   487→Task: Build Attendance, Notices, Settings modules
+   488→
+   489→Work Log:
+   490→- Read worklog.md, prisma schema, lib/{api,session,audit,db,utils}.ts, app-store.ts, existing teachers/students/hifz routes + dashboard view for conventions.
+   491→- Extended src/i18n/translations.ts with ~50 new keys across attendance.*/notices.*/settings.* for en/bn/ar (added settings.info, settings.appearance, settings.bdt/usd/sar/eur, settings.themeEmerald..Cyan, settings.sessionLang, settings.saveSuccess/Failed, settings.rolesPlaceholder, attendance.students/teachers/class/all/markAllPresent/save/last7days/noPersons/saved/failed/summary/total/loading/statsTitle, notices.exam/edit/delete/deleteConfirm/expiresAt/publishedAt/empty/emptyFiltered/readMore/readLess/saved/deleted/failed/deleteFailed).
+   492→- Built /api/attendance/route.ts (156 lines): GET (filters date/personType/status + pagination; resolves person name from Student or Teacher table in parallel) + POST (bulk upsert by unique [tenantId, personId, personType, date], validates every entry, verifies tenant ownership, markedBy = session.userId, audit).
+   493→- Built /api/attendance/stats/route.ts (50 lines): GET last-7-days series [{date, present, absent, late, leave, rate}] for current tenant.
+   494→- Built /api/notices/route.ts (97 lines): GET (filters type/audience + pagination, ordered by publishedAt desc) + POST (validated create, audit).
+   495→- Built /api/notices/[id]/route.ts (67 lines): PUT (partial update, scoped via findFirst({id, tenantId}), audit) + DELETE (audit).
+   496→- Built /api/settings/route.ts (75 lines): GET tenant info + PUT update (only name/phone/email/address/currency/language/theme/logoUrl — explicitly excludes plan & status). Audit recorded.
+   497→- Built /api/settings/roles/route.ts (13 lines): GET list of tenant roles for the Roles tab.
+   498→- Built src/modules/attendance/attendance-view.tsx (152 lines): date picker + person-type tabs + class filter + locale-aware date display + wires marker/stats. dir={dir()} for RTL.
+   499→- Built src/modules/attendance/attendance-marker.tsx (283 lines): roster list with 4 status buttons (Present/Absent/Late/Leave), summary badges, Mark-All-Present + Save buttons, ScrollArea max-h-[28rem], onSaved callback to refresh stats. Loads roster from /api/students or /api/teachers, loads existing marks from /api/attendance.
+   500→- Built src/modules/attendance/attendance-stats.tsx (117 lines): Recharts LineChart of 7-day attendance rate with gradient stroke, avg-rate card header, loading skeleton.
+   501→- Built src/modules/notices/notices-view.tsx (158 lines): header + Add button, type & audience filter chips with color coding, empty states (no notices vs no matches), wires list + form.
+   502→- Built src/modules/notices/notices-list.tsx (206 lines): responsive card grid, type & audience tinted badges, expand/collapse for long content, DropdownMenu edit/delete, AlertDialog delete confirm, locale-aware dates, ScrollArea max-h.
+   503→- Built src/modules/notices/notice-form.tsx (192 lines): Add/Edit dialog (title, content textarea, type select, audience select, expiresAt date). POST/PUT with toast feedback.
+   504→- Built src/modules/settings/settings-view.tsx (93 lines): three tabs (Madrasa Info / Appearance / Roles), plan+status badges in header, loading skeleton, error card.
+   505→- Built src/modules/settings/settings-info.tsx (173 lines): form with name, phone, email, address, currency select (BDT/USD/SAR/EUR), default-language select (bn/en/ar), Save button → PUT /api/settings.
+   506→- Built src/modules/settings/settings-appearance.tsx (138 lines): 6 theme color swatches (emerald, violet, rose, amber, teal, cyan) with active check; click updates useApp.themeColor + PUT /api/settings. Session language switcher wired to useApp.setLocale.
+   507→- Built src/modules/settings/settings-roles.tsx (91 lines): placeholder card ("coming soon") + live list of tenant roles from /api/settings/roles with System badge for isSystem roles.
+   508→- Ran bun run lint — fixed one unused-eslint-disable warning by including the proper deps array; final result: 0 errors, 0 warnings across the entire project.
+   509→- Smoke-tested all 5 new endpoints via curl (all return 401 without auth cookie, proving routes are wired + auth enforced). dev.log shows clean compilation for every new file (no errors/warnings).
+   510→
+   511→Stage Summary:
+   512→- Files created:
+   513→  - src/app/api/attendance/route.ts (156 lines)
+   514→  - src/app/api/attendance/stats/route.ts (50 lines)
+   515→  - src/app/api/notices/route.ts (97 lines)
+   516→  - src/app/api/notices/[id]/route.ts (67 lines)
+   517→  - src/app/api/settings/route.ts (75 lines)
+   518→  - src/app/api/settings/roles/route.ts (13 lines)
+   519→  - src/modules/attendance/attendance-view.tsx (152 lines)
+   520→  - src/modules/attendance/attendance-marker.tsx (283 lines)
+   521→  - src/modules/attendance/attendance-stats.tsx (117 lines)
+   522→  - src/modules/notices/notices-view.tsx (158 lines)
+   523→  - src/modules/notices/notices-list.tsx (206 lines)
+   524→  - src/modules/notices/notice-form.tsx (192 lines)
+   525→  - src/modules/settings/settings-view.tsx (93 lines)
+   526→  - src/modules/settings/settings-info.tsx (173 lines)
+   527→  - src/modules/settings/settings-appearance.tsx (138 lines)
+   528→  - src/modules/settings/settings-roles.tsx (91 lines)
+   529→  - src/i18n/translations.ts (extended with ~50 new keys × 3 locales — additive only)
+   530→  - src/agent-ctx/13-attendance-notices-settings.md (work record)
+   531→- Key decisions:
+   532→  - Bulk upsert for attendance via $transaction of upserts keyed on unique constraint.
+   533→  - Person name resolution in attendance GET via two parallel findMany (students + teachers) — avoids N+1.
+   534→  - Attendance rate = (present + late) / total × 100 — consistent with dashboard module's logic.
+   535→  - Theme swatches update local Zustand store (instant preview) AND fire PUT to persist on tenant — survives logout.
+   536→  - Session language switch (Appearance tab) is per-user via useApp.setLocale; tenant default language (Madrasa Info tab) is persisted via PUT /api/settings — clear separation.
+   537→  - Roles tab gracefully degrades if /api/settings/roles isn't implemented (returns empty list); built the endpoint anyway so it lists existing roles + marks system roles.
+   538→  - Native <input type="date"> used everywhere — matches existing hifz/finance/teachers pattern.
+   539→  - All queries filter by session.tenantId; single-record mutations use findFirst({id, tenantId}) to prevent cross-tenant access.
+   540→  - Audit recorded for every mutation (create/update/delete) via auditAfter.
+   541→  - Every top-level view wraps in <div dir={dir()}> for RTL support; status buttons in marker use dir="ltr" since icons+labels read LTR even in RTL contexts.
+   542→- Issues/notes:
+   543→  - Views are exported but not yet wired into the app shell router (src/app/page.tsx still placeholder). Integration is the orchestrator/shell agent's responsibility. The ViewKeys "attendance", "notices", "settings" already exist in the Zustand store.
+   544→  - No file outside the three module scopes was modified except src/i18n/translations.ts (additive key extension only — no existing keys changed).
+   545→  - Pre-existing ESLint errors in other agents' files (if any) were left untouched.
+   546→  - All file line counts within their specified limits (largest: attendance-marker.tsx at 283/300).
+   547→
