@@ -5,7 +5,7 @@ import { AppSidebar } from "./app-sidebar";
 import { AppHeader } from "./app-header";
 import { CommandPalette } from "./command-palette";
 import { useCommandPalette } from "@/hooks/use-command-palette";
-import { DashboardView } from "@/modules/dashboard/dashboard-view";
+import { DashboardRouter } from "@/modules/dashboard/dashboard-router";
 import { StudentsView } from "@/modules/students/students-view";
 import { TeachersView } from "@/modules/teachers/teachers-view";
 import { AcademicView } from "@/modules/academic/academic-view";
@@ -39,7 +39,7 @@ export function AppShell() {
 
   const renderView = () => {
     switch (view) {
-      case "dashboard": return <DashboardView />;
+      case "dashboard": return <DashboardRouter />;
       case "students": return <StudentsView />;
       case "teachers": return <TeachersView />;
       case "academic": return <AcademicView />;
@@ -66,7 +66,7 @@ export function AppShell() {
       case "inventory": return <InventoryView />;
       case "ai": return <AiView />;
       case "timetable": return <TimetableView />;
-      default: return <DashboardView />;
+      default: return <DashboardRouter />;
     }
   };
 

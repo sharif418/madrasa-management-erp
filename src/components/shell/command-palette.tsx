@@ -1,10 +1,12 @@
 "use client";
-// Command Palette — Cmd+K quick navigation + student search
+// Command Palette — Cmd+K quick navigation + global cross-entity search.
 // Controlled component: parent passes { open, onOpenChange } from useCommandPalette hook.
+// Search results are rendered by the <SearchResults /> sub-component (debounced fetch
+// to /api/search across students, teachers, donors, books, transactions).
 import * as React from "react";
 import { Command as CommandPrimitive } from "cmdk";
 import {
-  Search, Loader2, LayoutDashboard, Users, GraduationCap, BookOpen,
+  Search, LayoutDashboard, Users, GraduationCap, BookOpen,
   BookMarked, ClipboardList, Banknote, Wallet, Bell, Settings, History,
   FileBarChart, UserPlus, Receipt, ClipboardCheck, BellPlus,
 } from "lucide-react";
@@ -17,6 +19,7 @@ import {
   Command, CommandList, CommandEmpty, CommandGroup, CommandItem, CommandSeparator,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { SearchResults } from "@/components/shell/search-results";
 
 type NavItem = { key: ViewKey; icon: LucideIcon };
 const NAV_ITEMS: NavItem[] = [
@@ -44,11 +47,6 @@ const QUICK_ACTIONS: QuickAction[] = [
   { id: "addNotice", icon: BellPlus, view: "notices", key: "command.addNotice" },
 ];
 
-type StudentHit = {
-  id: string; name: string; nameArabic: string | null;
-  rollNo: string | null; class?: { name: string | null } | null;
-};
-
 export function CommandPalette({
   open,
   onOpenChange,
@@ -58,61 +56,20 @@ export function CommandPalette({
 }) {
   const { t, setView, dir } = useApp();
   const [query, setQuery] = React.useState("");
-  const [students, setStudents] = React.useState<StudentHit[]>([]);
-  const [loading, setLoading] = React.useState(false);
 
-  // Reset internal state when palette closes
+  // Reset query when palette closes so next open starts fresh.
   React.useEffect(() => {
-    if (!open) {
-      setQuery("");
-      setStudents([]);
-      setLoading(false);
-    }
+    if (!open) setQuery("");
   }, [open]);
-
-  // Debounced async student search (300ms). Fires only when query non-empty.
-  React.useEffect(() => {
-    const q = query.trim();
-    if (!q) {
-      setStudents([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    const ctrl = new AbortController();
-    const timer = setTimeout(async () => {
-      try {
-        const res = await fetch(
-          `/api/students?search=${encodeURIComponent(q)}&limit=5`,
-          { signal: ctrl.signal, credentials: "same-origin" }
-        );
-        if (!res.ok) { setStudents([]); return; }
-        const json = await res.json();
-        const items: StudentHit[] = (json?.data?.items ?? json?.items ?? []).map(
-          (s: Record<string, unknown>) => ({
-            id: String(s.id ?? ""),
-            name: String(s.name ?? ""),
-            nameArabic: (s.nameArabic as string | null) ?? null,
-            rollNo: (s.rollNo as string | null) ?? null,
-            class: s.class ? { name: (s.class as { name?: string }).name ?? null } : null,
-          })
-        );
-        setStudents(items);
-      } catch {
-        /* aborted or network error — ignore */
-      } finally {
-        setLoading(false);
-      }
-    }, 300);
-    return () => { clearTimeout(timer); ctrl.abort(); };
-  }, [query]);
 
   const go = (v: ViewKey) => {
     setView(v);
     onOpenChange(false);
   };
 
-  const showStudents = students.length > 0 || (loading && query.trim().length > 0);
+  // When an active search (>=2 chars) is in progress, the SearchResults
+  // component owns the empty state — suppress the cmdk CommandEmpty.
+  const hasActiveSearch = query.trim().length >= 2;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -146,19 +103,22 @@ export function CommandPalette({
               onValueChange={setQuery}
               className="flex h-9 w-full bg-transparent text-sm text-white placeholder:text-white/80 outline-none"
             />
-            {loading && (
-              <Loader2 className="h-4 w-4 shrink-0 animate-spin text-white/80" />
-            )}
           </div>
 
           <CommandList className="max-h-[60vh]">
-            <CommandEmpty>
-              <div className="py-8 text-center text-sm text-muted-foreground">
-                {t("command.noResults")}
-              </div>
-            </CommandEmpty>
+            {!hasActiveSearch && (
+              <CommandEmpty>
+                <div className="py-8 text-center text-sm text-muted-foreground">
+                  {t("command.noResults")}
+                </div>
+              </CommandEmpty>
+            )}
+
+            {/* Global search results — debounced fetch to /api/search */}
+            <SearchResults query={query} onNavigate={go} />
 
             {/* Navigation */}
+            <CommandSeparator />
             <CommandGroup heading={t("command.navigation")}>
               {NAV_ITEMS.map(({ key, icon: Icon }) => (
                 <CommandItem
@@ -191,41 +151,6 @@ export function CommandPalette({
                 </CommandItem>
               ))}
             </CommandGroup>
-
-            {/* Students (async search) */}
-            {showStudents && (
-              <>
-                <CommandSeparator />
-                <CommandGroup heading={t("command.students")}>
-                  {loading && students.length === 0 && (
-                    <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      {t("command.searching")}
-                    </div>
-                  )}
-                  {students.map((s) => (
-                    <CommandItem
-                      key={s.id}
-                      value={`stu ${s.id} ${s.name} ${s.rollNo ?? ""} ${s.nameArabic ?? ""}`}
-                      onSelect={() => go("students")}
-                    >
-                      <span className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-100 text-xs font-semibold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
-                        {s.name.charAt(0).toUpperCase()}
-                      </span>
-                      <div className="flex flex-col min-w-0">
-                        <span className="font-medium leading-tight truncate">
-                          {s.name}
-                        </span>
-                        <span className="text-xs text-muted-foreground truncate">
-                          {s.rollNo ? `#${s.rollNo}` : ""}
-                          {s.class?.name ? `${s.rollNo ? " · " : ""}${s.class.name}` : ""}
-                        </span>
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </>
-            )}
           </CommandList>
 
           {/* Footer hint */}
