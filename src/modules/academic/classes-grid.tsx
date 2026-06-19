@@ -10,7 +10,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -109,7 +108,21 @@ function ClassCard({
   const capacity = cls.capacity || 1;
   const pct = Math.min(100, Math.round((enrolled / capacity) * 100));
   const isFull = enrolled >= capacity;
+  const isNearFull = !isFull && pct >= 80;
   const gradient = CURRICULUM_GRADIENT[cls.curriculum] || CURRICULUM_GRADIENT.qawmi;
+
+  // Capacity progress bar color
+  const barColor = isFull
+    ? "from-rose-500 to-rose-600"
+    : isNearFull
+      ? "from-amber-400 to-amber-500"
+      : "from-emerald-500 to-teal-500";
+  const countColor = isFull
+    ? "text-rose-600 dark:text-rose-400"
+    : isNearFull
+      ? "text-amber-600 dark:text-amber-400"
+      : "text-emerald-700 dark:text-emerald-300";
+  const statusLabel = isFull ? t("academic.capacityFull") : isNearFull ? t("academic.nearFull") : null;
 
   return (
     <motion.div
@@ -117,14 +130,30 @@ function ClassCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, delay: Math.min(index * 0.04, 0.3) }}
     >
-      <Card className="group relative overflow-hidden py-0 gap-0 hover:shadow-md transition-shadow">
-        {/* Gradient header */}
-        <div className={`h-20 w-full bg-gradient-to-br ${gradient} relative`}>
+      <Card className="group relative overflow-hidden py-0 gap-0 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+        {/* Gradient header with Islamic geometric pattern */}
+        <div className={`relative h-20 w-full bg-gradient-to-br ${gradient}`}>
+          {/* CSS-only Islamic 8-point star tessellation overlay */}
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.18]"
+            aria-hidden="true"
+            style={{
+              backgroundImage:
+                "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'><g fill='none' stroke='white' stroke-width='0.9'><polygon points='15,2 18,10 26,10 20,15 22,23 15,19 8,23 10,15 4,10 12,10'/></g></svg>\")",
+              backgroundSize: "30px 30px",
+              backgroundRepeat: "repeat",
+            }}
+          />
+          {/* Soft glow accent */}
+          <div
+            className="pointer-events-none absolute -end-4 -top-4 size-20 rounded-full bg-white/15 blur-xl transition-transform group-hover:scale-125"
+            aria-hidden="true"
+          />
           <div className="absolute inset-0 flex items-center justify-between px-4">
-            <div className="text-white/95">
-              <GraduationCap className="size-7 drop-shadow-sm" />
+            <div className="grid size-9 place-items-center rounded-lg bg-white/20 text-white ring-1 ring-white/30 backdrop-blur-sm">
+              <GraduationCap className="size-5 drop-shadow-sm" />
             </div>
-            <Badge className={`text-[10px] px-2 py-0.5 bg-white/20 text-white border-white/30 backdrop-blur-sm`}>
+            <Badge className="text-[10px] px-2 py-0.5 bg-white/20 text-white border-white/30 backdrop-blur-sm">
               {t(`academic.${cls.curriculum}`)}
             </Badge>
           </div>
@@ -150,7 +179,7 @@ function ClassCard({
 
           <div className="flex items-center gap-2 flex-wrap">
             {cls.code && (
-              <Badge variant="outline" className="text-[10px] gap-1">
+              <Badge variant="outline" className="text-[10px] gap-1 font-mono">
                 <Hash className="size-3" />
                 {cls.code}
               </Badge>
@@ -164,21 +193,29 @@ function ClassCard({
             </Badge>
           </div>
 
-          {/* Capacity progress */}
+          {/* Capacity progress with gradient fill + percentage label */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1 text-muted-foreground">
+              <span className="flex items-center gap-1.5 text-muted-foreground">
                 <Users className="size-3.5" />
                 {t("academic.enrolled")}
+                {statusLabel && (
+                  <span className={`ms-1 inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${isFull ? "bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300" : "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"}`}>
+                    {statusLabel}
+                  </span>
+                )}
               </span>
-              <span className={`font-medium ${isFull ? "text-amber-600 dark:text-amber-400" : ""}`}>
+              <span className={`font-semibold tabular-nums ${countColor}`}>
                 {enrolled} / {capacity}
+                <span className="ms-1 text-[10px] opacity-70">({pct}%)</span>
               </span>
             </div>
-            <Progress
-              value={pct}
-              className={isFull ? "[&>[data-slot=progress-indicator]]:bg-amber-500" : undefined}
-            />
+            <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className={`absolute inset-y-0 start-0 rounded-full bg-gradient-to-r ${barColor} transition-all duration-500`}
+                style={{ width: `${Math.max(pct, isFull ? 100 : 4)}%` }}
+              />
+            </div>
           </div>
         </div>
       </Card>

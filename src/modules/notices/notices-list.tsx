@@ -1,6 +1,7 @@
 "use client";
 // NoticesList — card list with type chips, expand/collapse content, edit/delete actions
 import * as React from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Megaphone, MoreVertical, Pencil, Trash2, ChevronDown, ChevronUp, Calendar, Clock,
+  AlertTriangle, CalendarOff, BookOpen, PartyPopper, Info, type LucideIcon,
 } from "lucide-react";
 import { useApp } from "@/store/app-store";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +29,23 @@ const TYPE_TINT: Record<Notice["type"], string> = {
   exam: "bg-violet-100 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300",
   event: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
   general: "bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300",
+};
+
+// Solid gradient accent used for the card left border + icon tile
+const TYPE_ACCENT: Record<Notice["type"], { border: string; tile: string }> = {
+  urgent: { border: "border-s-rose-500", tile: "bg-gradient-to-br from-rose-500 to-rose-600" },
+  holiday: { border: "border-s-amber-500", tile: "bg-gradient-to-br from-amber-400 to-amber-600" },
+  exam: { border: "border-s-violet-500", tile: "bg-gradient-to-br from-violet-500 to-purple-600" },
+  event: { border: "border-s-emerald-500", tile: "bg-gradient-to-br from-emerald-500 to-teal-600" },
+  general: { border: "border-s-sky-500", tile: "bg-gradient-to-br from-sky-500 to-cyan-600" },
+};
+
+const TYPE_ICON: Record<Notice["type"], LucideIcon> = {
+  urgent: AlertTriangle,
+  holiday: CalendarOff,
+  exam: BookOpen,
+  event: PartyPopper,
+  general: Info,
 };
 
 const AUDIENCE_TINT: Record<Notice["audience"], string> = {
@@ -101,81 +120,118 @@ export function NoticesList({
     <>
       <ScrollArea className="max-h-[calc(100vh-16rem)] pe-3">
         <div className="grid gap-3 sm:grid-cols-2" dir={dir()}>
-          {notices.map((n) => {
+          {notices.map((n, idx) => {
             const isLong = n.content.length > 160;
             const isExpanded = expanded.has(n.id);
+            const accent = TYPE_ACCENT[n.type];
+            const TypeIcon = TYPE_ICON[n.type];
             return (
-              <Card key={n.id} className="flex flex-col overflow-hidden transition-shadow hover:shadow-md">
-                <CardContent className="flex flex-1 flex-col gap-3 p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <Badge variant="outline" className={cn("capitalize", TYPE_TINT[n.type])}>
-                        {t(`notices.${n.type}`)}
-                      </Badge>
-                      <Badge variant="outline" className={cn("capitalize", AUDIENCE_TINT[n.audience])}>
-                        {t(`notices.${n.audience}`)}
-                      </Badge>
+              <motion.div
+                key={n.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, delay: Math.min(idx * 0.04, 0.3) }}
+              >
+                <Card
+                  className={cn(
+                    "flex flex-col overflow-hidden border-s-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg",
+                    accent.border
+                  )}
+                >
+                  <CardContent className="flex flex-1 flex-col gap-3 p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                        <span className={cn("grid size-7 shrink-0 place-items-center rounded-md text-white shadow-sm", accent.tile)}>
+                          <TypeIcon className="size-3.5" />
+                        </span>
+                        <Badge variant="outline" className={cn("capitalize", TYPE_TINT[n.type])}>
+                          {t(`notices.${n.type}`)}
+                        </Badge>
+                        <Badge variant="outline" className={cn("capitalize", AUDIENCE_TINT[n.audience])}>
+                          {t(`notices.${n.audience}`)}
+                        </Badge>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="size-7 shrink-0" aria-label={t("common.actions")}>
+                            <MoreVertical className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => onEdit(n)}>
+                            <Pencil className="size-4" /> {t("common.edit")}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => setToDelete(n)}
+                            className="text-rose-600 focus:text-rose-700"
+                          >
+                            <Trash2 className="size-4" /> {t("common.delete")}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="size-7" aria-label={t("common.actions")}>
-                          <MoreVertical className="size-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onEdit(n)}>
-                          <Pencil className="size-4" /> {t("common.edit")}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => setToDelete(n)}
-                          className="text-rose-600 focus:text-rose-700"
-                        >
-                          <Trash2 className="size-4" /> {t("common.delete")}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
 
-                  <div>
-                    <h3 className="line-clamp-2 font-semibold leading-tight">{n.title}</h3>
-                    <p
-                      className={cn(
-                        "mt-1.5 whitespace-pre-wrap text-sm text-muted-foreground",
-                        !isExpanded && isLong && "line-clamp-2"
-                      )}
-                    >
-                      {n.content}
-                    </p>
-                    {isLong && (
-                      <button
-                        type="button"
-                        onClick={() => toggleExpand(n.id)}
-                        className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-violet-600 hover:underline"
-                      >
+                    <div>
+                      <h3 className="line-clamp-2 font-semibold leading-tight">{n.title}</h3>
+                      <AnimatePresence initial={false}>
                         {isExpanded ? (
-                          <>{t("notices.readLess")} <ChevronUp className="size-3" /></>
+                          <motion.p
+                            key="expanded"
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.25, ease: "easeInOut" }}
+                            className="overflow-hidden whitespace-pre-wrap pt-1.5 text-sm text-muted-foreground"
+                          >
+                            {n.content}
+                          </motion.p>
                         ) : (
-                          <>{t("notices.readMore")} <ChevronDown className="size-3" /></>
+                          <motion.p
+                            key="collapsed"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.15 }}
+                            className={cn(
+                              "pt-1.5 text-sm text-muted-foreground",
+                              isLong && "line-clamp-2"
+                            )}
+                          >
+                            {n.content}
+                          </motion.p>
                         )}
-                      </button>
-                    )}
-                  </div>
+                      </AnimatePresence>
+                      {isLong && (
+                        <button
+                          type="button"
+                          onClick={() => toggleExpand(n.id)}
+                          className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-violet-600 hover:underline dark:text-violet-400"
+                        >
+                          {isExpanded ? (
+                            <>{t("notices.readLess")} <ChevronUp className="size-3" /></>
+                          ) : (
+                            <>{t("notices.readMore")} <ChevronDown className="size-3" /></>
+                          )}
+                        </button>
+                      )}
+                    </div>
 
-                  <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 border-t pt-2 text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-1">
-                      <Calendar className="size-3" />
-                      {dateFmt.format(new Date(n.publishedAt))}
-                    </span>
-                    {n.expiresAt && (
+                    <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 border-t pt-2 text-xs text-muted-foreground">
                       <span className="inline-flex items-center gap-1">
-                        <Clock className="size-3" />
-                        {t("notices.expiresAt")}: {dateFmt.format(new Date(n.expiresAt))}
+                        <Calendar className="size-3" />
+                        {dateFmt.format(new Date(n.publishedAt))}
                       </span>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                      {n.expiresAt && (
+                        <span className="inline-flex items-center gap-1">
+                          <Clock className="size-3" />
+                          {t("notices.expiresAt")}: {dateFmt.format(new Date(n.expiresAt))}
+                        </span>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             );
           })}
         </div>

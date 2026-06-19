@@ -7,12 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CheckCircle2, XCircle, Clock, Plane, Save, Zap } from "lucide-react";
+import { Save, Zap } from "lucide-react";
 import { useApp } from "@/store/app-store";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-
-type Status = "present" | "absent" | "late" | "leave";
+import { STATUS_OPTIONS, StatusButton, type Status } from "./attendance-status";
 
 type Person = {
   id: string;
@@ -21,42 +20,6 @@ type Person = {
   designation?: string | null;
   className?: string | null;
 };
-
-const STATUS_OPTIONS: { value: Status; icon: React.ReactNode; cls: string }[] = [
-  { value: "present", icon: <CheckCircle2 className="size-3.5" />, cls: "data-[state=on]:bg-emerald-600 data-[state=on]:text-white" },
-  { value: "absent", icon: <XCircle className="size-3.5" />, cls: "data-[state=on]:bg-rose-600 data-[state=on]:text-white" },
-  { value: "late", icon: <Clock className="size-3.5" />, cls: "data-[state=on]:bg-amber-500 data-[state=on]:text-white" },
-  { value: "leave", icon: <Plane className="size-3.5" />, cls: "data-[state=on]:bg-violet-600 data-[state=on]:text-white" },
-];
-
-function StatusButton({
-  value, active, label, icon, cls, onClick,
-}: {
-  value: Status;
-  active: boolean;
-  label: string;
-  icon: React.ReactNode;
-  cls: string;
-  onClick: (v: Status) => void;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      aria-label={label}
-      onClick={() => onClick(value)}
-      className={cn(
-        "inline-flex h-8 items-center gap-1 rounded-md border border-transparent px-2.5 text-xs font-medium transition-colors",
-        active
-          ? cls.replace("data-[state=on]:", "")
-          : "bg-muted text-muted-foreground hover:bg-muted/80"
-      )}
-    >
-      {icon}
-      <span className="hidden sm:inline">{label}</span>
-    </button>
-  );
-}
 
 export function AttendanceMarker({
   date,
@@ -186,35 +149,53 @@ export function AttendanceMarker({
   return (
     <Card>
       <CardContent className="space-y-4 p-4">
+        {/* Summary bar with colored dots */}
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-muted/30 p-2.5">
+          {STATUS_OPTIONS.map((opt) => {
+            const c = counts[opt.value];
+            return (
+              <span
+                key={opt.value}
+                className="inline-flex items-center gap-1.5 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium shadow-sm"
+              >
+                <span className={cn("size-2 rounded-full", opt.dot)} />
+                <span className="text-muted-foreground">{t(`attendance.${opt.value}`)}</span>
+                <span className="font-semibold tabular-nums">{c}</span>
+              </span>
+            );
+          })}
+          {counts.unmarked > 0 && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium shadow-sm">
+              <span className="size-2 rounded-full bg-muted-foreground/40" />
+              <span className="text-muted-foreground">{t("attendance.unmarked")}</span>
+              <span className="font-semibold tabular-nums">{counts.unmarked}</span>
+            </span>
+          )}
+        </div>
+
         {/* Toolbar */}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
-              {t("attendance.present")}: {counts.present}
-            </Badge>
-            <Badge variant="outline" className="bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
-              {t("attendance.absent")}: {counts.absent}
-            </Badge>
-            <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
-              {t("attendance.late")}: {counts.late}
-            </Badge>
-            <Badge variant="outline" className="bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300">
-              {t("attendance.leave")}: {counts.leave}
-            </Badge>
-            {counts.unmarked > 0 && (
-              <Badge variant="outline" className="text-muted-foreground">
-                {counts.unmarked} ·
-              </Badge>
-            )}
+          <div className="text-xs text-muted-foreground">
+            {t("attendance.markedToday")}:{" "}
+            <span className="font-semibold text-foreground tabular-nums">
+              {persons.length - counts.unmarked}/{persons.length}
+            </span>
           </div>
           <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={markAllPresent} disabled={persons.length === 0}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={markAllPresent}
+              disabled={persons.length === 0}
+              className="border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-950/70"
+            >
               <Zap className="size-4" /> {t("attendance.markAllPresent")}
             </Button>
             <Button
               type="button"
               size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700"
               onClick={save}
               disabled={saving || persons.length === 0}
             >
@@ -266,7 +247,8 @@ export function AttendanceMarker({
                           active={cur === opt.value}
                           label={t(`attendance.${opt.value}`)}
                           icon={opt.icon}
-                          cls={opt.cls}
+                          activeCls={opt.activeCls}
+                          idleCls={opt.idleCls}
                           onClick={(v) => setOne(p.id, v)}
                         />
                       ))}

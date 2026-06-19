@@ -39,12 +39,23 @@ export function SettingsView() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="size-10 rounded-xl bg-emerald-600/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
-            <Settings className="size-5" />
+          <div className="relative grid size-12 place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-600/20 ring-1 ring-white/30">
+            {/* Islamic geometric pattern overlay */}
+            <div
+              className="pointer-events-none absolute inset-0 opacity-[0.15]"
+              aria-hidden="true"
+              style={{
+                backgroundImage:
+                  "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><g fill='none' stroke='white' stroke-width='1'><polygon points='20,3 25,14 36,14 27,22 31,33 20,27 9,33 13,22 4,14 15,14'/></g></svg>\")",
+                backgroundSize: "40px 40px",
+                backgroundRepeat: "repeat",
+              }}
+            />
+            <Settings className="relative size-6 drop-shadow-sm" />
           </div>
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{t("settings.title")}</h1>
-            <p className="text-sm text-muted-foreground">{t("settings.tenant")}</p>
+            <h1 className="text-2xl font-bold tracking-tight">{t("settings.title")}</h1>
+            <p className="text-sm text-muted-foreground">{t("settings.subtitle")}</p>
           </div>
         </div>
         {info && (

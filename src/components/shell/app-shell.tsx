@@ -15,7 +15,7 @@ import { NoticesView } from "@/modules/notices/notices-view";
 import { SettingsView } from "@/modules/settings/settings-view";
 import { AuditView } from "@/modules/audit/audit-view";
 import { ReportsView } from "@/modules/reports/reports-view";
-import { ExamsView } from "@/components/shell/exams-view-placeholder";
+import { ExamsView } from "@/modules/exams/exams-view";
 
 export function AppShell() {
   const { view } = useApp();

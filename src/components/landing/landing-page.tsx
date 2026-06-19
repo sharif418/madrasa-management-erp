@@ -12,12 +12,14 @@ import {
 } from "lucide-react";
 import { LoginDialog } from "@/components/auth/login-dialog";
 import { SignupDialog } from "@/components/auth/signup-dialog";
+import { GuardianPortalDialog } from "@/components/guardian/guardian-portal-dialog";
 import { useState } from "react";
 
 export function LandingPage() {
   const { t } = useApp();
   const [loginOpen, setLoginOpen] = useState(false);
   const [signupOpen, setSignupOpen] = useState(false);
+  const [guardianOpen, setGuardianOpen] = useState(false);
 
   const features = [
     { icon: Wallet, key: "finance", color: "from-emerald-500 to-teal-600" },
@@ -68,6 +70,15 @@ export function LandingPage() {
           </div>
           <div className="flex items-center gap-2">
             <LanguageSwitcher />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setGuardianOpen(true)}
+              className="gap-1.5 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950"
+            >
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">{t("guardian.portal")}</span>
+            </Button>
             <Button variant="ghost" size="sm" onClick={() => setLoginOpen(true)} className="hidden sm:inline-flex">
               {t("landing.hero.login")}
             </Button>
@@ -103,6 +114,15 @@ export function LandingPage() {
               </Button>
               <Button size="lg" variant="outline" onClick={() => setLoginOpen(true)} className="text-base px-8 h-12">
                 {t("landing.hero.login")}
+              </Button>
+              <Button
+                size="lg"
+                variant="ghost"
+                onClick={() => setGuardianOpen(true)}
+                className="gap-2 text-base px-8 h-12 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950"
+              >
+                <Users className="h-4 w-4" />
+                {t("guardian.portal")}
               </Button>
             </div>
           </div>
@@ -251,6 +271,7 @@ export function LandingPage() {
 
       <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
       <SignupDialog open={signupOpen} onOpenChange={setSignupOpen} />
+      <GuardianPortalDialog open={guardianOpen} onOpenChange={setGuardianOpen} />
     </div>
   );
 }

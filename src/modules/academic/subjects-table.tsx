@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import {
   Pencil, Trash2, Loader2, BookOpen, Hash, FolderTree,
+  Languages, GraduationCap, FileText,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,21 @@ import {
   SUBJECT_TYPES, SUBJECT_TYPE_BADGE,
   type ClassOption, type SubjectDTO, type SubjectType,
 } from "./types";
+
+// Per-type icon + tint (icon background)
+const SUBJECT_TYPE_ICON: Record<SubjectType, typeof BookOpen> = {
+  quranic: BookOpen,
+  arabic: Languages,
+  academic: GraduationCap,
+  general: FileText,
+};
+
+const SUBJECT_TYPE_ICON_TINT: Record<SubjectType, string> = {
+  academic: "bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300",
+  quranic: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
+  arabic: "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
+  general: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+};
 
 type Props = {
   subjects: SubjectDTO[];
@@ -80,8 +96,8 @@ export function SubjectsTable({
       <Card className="overflow-hidden py-0">
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted/40">
-              <TableHead className="ps-4">{t("academic.subjectName")}</TableHead>
+            <TableRow className="bg-muted/40 hover:bg-muted/40">
+              <TableHead className="ps-4 w-[40%]">{t("academic.subjectName")}</TableHead>
               <TableHead className="w-24">{t("academic.code")}</TableHead>
               <TableHead className="w-32">{t("academic.subjectType")}</TableHead>
               <TableHead className="w-40">{t("academic.filterClass")}</TableHead>
@@ -124,15 +140,22 @@ function SubjectRow({
     ? subject.type
     : "general") as SubjectType;
   const badgeClass = SUBJECT_TYPE_BADGE[type] || SUBJECT_TYPE_BADGE.general;
+  const Icon = SUBJECT_TYPE_ICON[type] || FileText;
+  const iconTint = SUBJECT_TYPE_ICON_TINT[type] || SUBJECT_TYPE_ICON_TINT.general;
 
   return (
-    <TableRow>
+    <TableRow className="transition-colors hover:bg-muted/50">
       <TableCell className="ps-4">
         <div className="flex items-center gap-2.5">
-          <div className="size-8 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
-            <BookOpen className="size-4" />
+          <div className={`grid size-9 place-items-center rounded-lg shrink-0 ${iconTint}`}>
+            <Icon className="size-4" />
           </div>
-          <span className="font-medium">{subject.name}</span>
+          <div className="min-w-0">
+            <span className="font-medium block truncate">{subject.name}</span>
+            <span className="text-[11px] text-muted-foreground">
+              {t(`academic.${type}`)}
+            </span>
+          </div>
         </div>
       </TableCell>
       <TableCell>
@@ -146,7 +169,7 @@ function SubjectRow({
         )}
       </TableCell>
       <TableCell>
-        <Badge variant="outline" className={`text-[10px] ${badgeClass}`}>
+        <Badge variant="outline" className={`text-[10px] gap-1 ${badgeClass}`}>
           {t(`academic.${type}`)}
         </Badge>
       </TableCell>
