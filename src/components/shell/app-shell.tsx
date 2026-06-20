@@ -39,6 +39,7 @@ import { AnalyticsView } from "@/modules/analytics/analytics-view";
 import { CertificatesView } from "@/modules/certificates/certificates-view";
 import { IdCardsView } from "@/modules/idcards/idcards-view";
 import { DailyReportView } from "@/modules/daily-report/daily-report-view";
+import { FeesView } from "@/modules/fees/fees-view";
 
 export function AppShell() {
   const { view } = useApp();
@@ -80,6 +81,7 @@ export function AppShell() {
       case "idcards": return <IdCardsView />;
       case "certificates": return <CertificatesView />;
       case "dailyreport": return <DailyReportView />;
+      case "fees": return <FeesView />;
       default: return <DashboardRouter />;
     }
   };

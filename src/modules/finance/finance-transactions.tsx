@@ -16,6 +16,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useFilterPersistence } from "@/hooks/use-filter-persistence";
+import { SavedSearchesBar } from "@/components/shared/saved-searches-bar";
 import { AddTransactionDialog } from "./finance-form";
 import { FinanceChart } from "./finance-chart";
 import { TransactionsTable } from "./finance-tx-table";
@@ -39,10 +41,26 @@ export function FinanceTransactions({
   const [delId, setDelId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const [fundId, setFundId] = useState("all");
-  const [type, setType] = useState<"all" | TxType>("all");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  // Persisted filter state — survives navigation across modules.
+  const [filters, setFilters, resetFilters] = useFilterPersistence(
+    "finance-tx",
+    { fundId: "", type: "", from: "", to: "" }
+  );
+  // Derived values — empty string is treated as "all" (no filter).
+  const fundId = (filters.fundId as string) ?? "";
+  const type = ((filters.type as string) ?? "") as "all" | TxType;
+  const from = (filters.from as string) ?? "";
+  const to = (filters.to as string) ?? "";
+  const setFundId = useCallback(
+    (v: string) => setFilters({ fundId: v === "all" ? "" : v }),
+    [setFilters]
+  );
+  const setType = useCallback(
+    (v: "all" | TxType) => setFilters({ type: v === "all" ? "" : v }),
+    [setFilters]
+  );
+  const setFrom = useCallback((v: string) => setFilters({ from: v }), [setFilters]);
+  const setTo = useCallback((v: string) => setFilters({ to: v }), [setFilters]);
 
   // Load funds once for the filter dropdown.
   useEffect(() => {
@@ -55,8 +73,8 @@ export function FinanceTransactions({
   const load = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams();
-    if (fundId !== "all") params.set("fundId", fundId);
-    if (type !== "all") params.set("type", type);
+    if (fundId && fundId !== "all") params.set("fundId", fundId);
+    if (type && type !== "all") params.set("type", type);
     if (from) params.set("from", from);
     if (to) params.set("to", to);
     params.set("page", String(page));
@@ -121,13 +139,21 @@ export function FinanceTransactions({
     <div className="space-y-4">
       <FinanceChart />
 
+      {/* Saved searches + filter persistence */}
+      <SavedSearchesBar
+        module="finance-tx"
+        currentFilters={filters}
+        onApply={(f) => setFilters(f as typeof filters)}
+        onReset={resetFilters}
+      />
+
       {/* Filters + Add button + summary chips */}
       <Card className="border border-border/60">
         <CardContent className="p-0">
           <TransactionsFilterBar
             funds={funds}
-            fundId={fundId}
-            type={type}
+            fundId={fundId || "all"}
+            type={(type || "all") as "all" | TxType}
             from={from}
             to={to}
             sums={sums}

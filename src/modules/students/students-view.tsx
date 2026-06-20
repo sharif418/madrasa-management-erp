@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/pagination";
 import { useApp } from "@/store/app-store";
 import { useToast } from "@/hooks/use-toast";
+import { useFilterPersistence } from "@/hooks/use-filter-persistence";
+import { SavedSearchesBar } from "@/components/shared/saved-searches-bar";
 import { useT } from "./i18n";
 import { useStudents, useClasses } from "./use-students";
 import { StudentsTable } from "./students-table";
@@ -39,9 +41,10 @@ export function StudentsView() {
   const tenantName = useApp((s) => s.tenantName);
   const { toast } = useToast();
 
-  const [search, setSearch] = useState("");
-  const [classId, setClassId] = useState<string>("");
-  const [gender, setGender] = useState<string>("");
+  const [filters, setFilters, resetFilters] = useFilterPersistence("students", { search: "", classId: "", gender: "" });
+  const search = (filters.search as string) ?? "", classId = (filters.classId as string) ?? "", gender = (filters.gender as string) ?? "";
+  const setSearch = (v: string) => setFilters({ search: v });
+  const setClassId = (v: string) => setFilters({ classId: v }), setGender = (v: string) => setFilters({ gender: v });
   const [page, setPage] = useState(1);
 
   const [formOpen, setFormOpen] = useState(false);
@@ -175,6 +178,8 @@ export function StudentsView() {
           {t("students.add")}
         </Button>
       </div>
+
+      <SavedSearchesBar module="students" currentFilters={filters} onApply={(f) => { setFilters(f as typeof filters); setPage(1); }} onReset={() => { resetFilters(); setPage(1); }} />
 
       {/* Filters */}
       <Card>

@@ -1,9 +1,11 @@
 "use client";
 // HifzRecordsTable — list with filters + delete action
 import * as React from "react";
-import { Star, Trash2, Search, BookOpen, Plus, Loader2 } from "lucide-react";
+import { Star, Trash2, BookOpen, Plus, Loader2 } from "lucide-react";
 import { useApp } from "@/store/app-store";
 import { useToast } from "@/hooks/use-toast";
+import { useFilterPersistence } from "@/hooks/use-filter-persistence";
+import { SavedSearchesBar } from "@/components/shared/saved-searches-bar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -36,10 +38,16 @@ export function HifzRecordsTable({ students, onAddClick, refreshKey }: Props) {
   const { t, locale, dir } = useApp();
   const { toast } = useToast();
 
-  const [studentId, setStudentId] = React.useState("all");
-  const [type, setType] = React.useState("all");
-  const [from, setFrom] = React.useState("");
-  const [to, setTo] = React.useState("");
+  const [filters, setFilters, resetFilters] = useFilterPersistence("hifz", { studentId: "", type: "", from: "", to: "" });
+  // Derived values — empty string is treated as "all" (no filter).
+  const studentId = (filters.studentId as string) ?? "";
+  const type = (filters.type as string) ?? "";
+  const from = (filters.from as string) ?? "";
+  const to = (filters.to as string) ?? "";
+  const setStudentId = (v: string) => setFilters({ studentId: v === "all" ? "" : v });
+  const setType = (v: string) => setFilters({ type: v === "all" ? "" : v });
+  const setFrom = (v: string) => setFilters({ from: v });
+  const setTo = (v: string) => setFilters({ to: v });
   const [page, setPage] = React.useState(1);
   const limit = 10;
 
@@ -49,8 +57,8 @@ export function HifzRecordsTable({ students, onAddClick, refreshKey }: Props) {
 
   const qs = React.useMemo(() => {
     const p = new URLSearchParams({ page: String(page), limit: String(limit) });
-    if (studentId !== "all") p.set("studentId", studentId);
-    if (type !== "all") p.set("type", type);
+    if (studentId && studentId !== "all") p.set("studentId", studentId);
+    if (type && type !== "all") p.set("type", type);
     if (from) p.set("from", from);
     if (to) p.set("to", to);
     return p.toString();
@@ -96,11 +104,14 @@ export function HifzRecordsTable({ students, onAddClick, refreshKey }: Props) {
 
   return (
     <div className="space-y-4" dir={dir()}>
+      {/* Saved searches + filter persistence */}
+      <SavedSearchesBar module="hifz" currentFilters={filters} onApply={(f) => setFilters(f as typeof filters)} onReset={resetFilters} />
+
       {/* Filters */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-4 rounded-xl border bg-card">
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">{t("hifz.student")}</Label>
-          <Select value={studentId} onValueChange={setStudentId}>
+          <Select value={studentId || "all"} onValueChange={setStudentId}>
             <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
             <SelectContent className="max-h-72">
               <SelectItem value="all">{t("hifz.allStudents")}</SelectItem>
@@ -112,7 +123,7 @@ export function HifzRecordsTable({ students, onAddClick, refreshKey }: Props) {
         </div>
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">{t("hifz.type")}</Label>
-          <Select value={type} onValueChange={setType}>
+          <Select value={type || "all"} onValueChange={setType}>
             <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("hifz.allTypes")}</SelectItem>
