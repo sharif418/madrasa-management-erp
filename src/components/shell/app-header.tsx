@@ -1,4 +1,7 @@
-// App header — mobile menu button, page title, prayer widget, language switcher, logout
+// App header — mobile menu, page title, prayer widget on the left;
+// command-palette search, language, theme, notifications, logout on the right.
+// Subtle vertical dividers separate logical action groups; consistent icon
+// sizing throughout. Sticky + backdrop-blur; adapts to light/dark.
 "use client";
 import { useApp } from "@/store/app-store";
 import { Button } from "@/components/ui/button";
@@ -26,34 +29,43 @@ export function AppHeader({
     }
   };
 
+  const today = new Date().toLocaleDateString(undefined, {
+    weekday: "long", year: "numeric", month: "long", day: "numeric",
+  });
+
   return (
     <header className="sticky top-0 z-30 h-16 border-b bg-white/80 dark:bg-background/80 backdrop-blur-md">
       <div className="flex h-full items-center justify-between gap-3 px-4 lg:px-6">
-        <div className="flex items-center gap-3">
+        {/* Left: mobile menu + title/date + prayer widget */}
+        <div className="flex min-w-0 items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
             className="lg:hidden"
             onClick={() => setSidebarOpen(true)}
+            aria-label="Open menu"
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight flex items-center gap-2">
-              <Moon className="h-4 w-4 text-emerald-600 hidden sm:inline" />
-              {t(`nav.${view}`)}
+
+          <div className="flex min-w-0 flex-col leading-tight">
+            <h1 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+              <Moon className="hidden h-4 w-4 text-emerald-600 dark:text-emerald-400 sm:inline" />
+              <span className="truncate">{t(`nav.${view}`)}</span>
             </h1>
-            <p className="text-xs text-muted-foreground hidden sm:block">
-              {new Date().toLocaleDateString(undefined, {
-                weekday: "long", year: "numeric", month: "long", day: "numeric",
-              })}
+            <p className="hidden text-xs text-muted-foreground sm:block truncate">
+              {today}
             </p>
           </div>
-          <PrayerTimeWidget />
+
+          {/* Prayer widget — separated with a subtle divider */}
+          <div className="hidden h-10 border-l border-border/60 ps-3 sm:flex sm:items-center">
+            <PrayerTimeWidget />
+          </div>
         </div>
 
-        <div className="flex items-center gap-1">
-          {/* ⌘K command palette trigger */}
+        {/* Right: search | language + theme | notifications | logout */}
+        <div className="flex items-center gap-1.5">
           <Button
             variant="outline"
             size="sm"
@@ -62,15 +74,31 @@ export function AppHeader({
             title={t("command.hint")}
           >
             <Search className="h-3.5 w-3.5" />
-            <kbd className="hidden sm:inline-flex items-center gap-0.5 font-mono text-[10px] font-semibold tracking-wide">
+            <kbd className="hidden items-center gap-0.5 font-mono text-[10px] font-semibold tracking-wide sm:inline-flex">
               ⌘K
             </kbd>
             <span className="sr-only">{t("command.hint")}</span>
           </Button>
+
+          <div className="mx-1 h-6 w-px bg-border/60" aria-hidden="true" />
+
           <LanguageSwitcher compact />
           <ThemeToggle />
+
+          <div className="mx-1 h-6 w-px bg-border/60" aria-hidden="true" />
+
           <NotificationBell />
-          <Button variant="ghost" size="icon" onClick={onLogout} title={t("auth.logout")}>
+
+          <div className="mx-1 h-6 w-px bg-border/60" aria-hidden="true" />
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onLogout}
+            title={t("auth.logout")}
+            aria-label={t("auth.logout")}
+            className="text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/40"
+          >
             <LogOut className="h-4 w-4" />
           </Button>
         </div>

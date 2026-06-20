@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Star, Megaphone, Sparkles, CalendarDays } from "lucide-react";
+import { Star, Megaphone, Sparkles, CalendarDays, RefreshCw } from "lucide-react";
 import { useApp } from "@/store/app-store";
 import { DashboardStats } from "./dashboard-stats";
 import { DashboardCharts, type DashboardChartData } from "./dashboard-charts";
@@ -62,34 +63,71 @@ export function DashboardView() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<DashboardData | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
+  // Re-fetch on mount and whenever the user clicks Refresh (refreshKey bumps).
   useEffect(() => {
-    let alive = true;
+    const controller = new AbortController();
     (async () => {
       try {
         setLoading(true);
-        const res = await fetch("/api/dashboard", { cache: "no-store" });
+        const res = await fetch("/api/dashboard", {
+          cache: "no-store",
+          signal: controller.signal,
+        });
         const json = await res.json();
-        if (!alive) return;
+        if (controller.signal.aborted) return;
         if (!res.ok || !json.ok) {
           setErr(json.error || `HTTP ${res.status}`);
         } else {
           setData(json.data as DashboardData);
+          setErr(null);
         }
       } catch (e) {
-        if (alive) setErr(e instanceof Error ? e.message : "Network error");
+        if (controller.signal.aborted) return;
+        setErr(e instanceof Error ? e.message : "Network error");
       } finally {
-        if (alive) setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+          setLastUpdated(new Date());
+        }
       }
     })();
-    return () => { alive = false; };
-  }, []);
+    return () => controller.abort();
+  }, [refreshKey]);
 
   const timeFmt = new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit" });
   const dateFmt = new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" });
+  const lastUpdatedFmt = new Intl.DateTimeFormat(locale, {
+    hour: "numeric", minute: "2-digit", second: "2-digit",
+  });
 
   return (
     <div className="space-y-6">
+      {/* Toolbar: last-updated timestamp + Refresh */}
+      <div className="flex flex-wrap items-center justify-end gap-3 text-xs text-muted-foreground">
+        {lastUpdated ? (
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
+            {t("dashboard.lastUpdated")}:{" "}
+            <span className="font-medium text-foreground tabular-nums">
+              {lastUpdatedFmt.format(lastUpdated)}
+            </span>
+          </span>
+        ) : null}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setRefreshKey((k) => k + 1)}
+          disabled={loading}
+          className="h-8 gap-1.5 px-2.5 text-xs"
+        >
+          <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
+          {t("dashboard.refresh")}
+        </Button>
+      </div>
+
       {/* Welcome banner with Islamic geometric pattern overlay */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 p-6 text-white shadow-lg sm:p-8">
         {/* Soft glow accents */}
