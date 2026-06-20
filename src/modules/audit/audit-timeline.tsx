@@ -1,6 +1,7 @@
 "use client";
 // Audit Timeline — vertical list of audit entries with action-colored icons,
-// actor name, action+module+entity, timestamp (relative + absolute), expandable details.
+// actor name, action+module+entity, timestamp (relative + absolute), expandable details,
+// and before/after diff view when available.
 import { useState } from "react";
 import { useApp } from "@/store/app-store";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Plus, Pencil, Trash2, LogIn, LogOut, ChevronDown, ChevronRight, UserCircle, History,
+  GitCompare,
 } from "lucide-react";
 import { auditActionColors, type AuditEntry, type AuditAction } from "./audit-types";
 
@@ -55,7 +57,6 @@ export function AuditTimeline({ items, loading, hasFilters = false }: Props) {
 
   return (
     <ol className="relative space-y-3 ps-2">
-      {/* gradient vertical spine — emerald → amber */}
       <div
         className="pointer-events-none absolute inset-y-2 start-[18px] w-px bg-gradient-to-b from-emerald-400 via-amber-400 to-amber-600 opacity-60"
         aria-hidden="true"
@@ -67,9 +68,7 @@ export function AuditTimeline({ items, loading, hasFilters = false }: Props) {
   );
 }
 
-function TimelineRow({
-  entry, locale,
-}: { entry: AuditEntry; locale: string }) {
+function TimelineRow({ entry, locale }: { entry: AuditEntry; locale: string }) {
   const { t, dir } = useApp();
   const [open, setOpen] = useState(false);
   const action = entry.action;
@@ -88,9 +87,20 @@ function TimelineRow({
     try { detailsObj = JSON.parse(entry.details); } catch { /* ignore */ }
   }
 
+  // Extract before/after if present (and strip from "other" details)
+  let before: Record<string, unknown> | undefined;
+  let after: Record<string, unknown> | undefined;
+  let otherDetails: Record<string, unknown> | null = null;
+  if (detailsObj) {
+    const { before: b, after: a, ...rest } = detailsObj;
+    if (b && typeof b === "object") before = b as Record<string, unknown>;
+    if (a && typeof a === "object") after = a as Record<string, unknown>;
+    if (Object.keys(rest).length) otherDetails = rest;
+  }
+  const hasDiff = !!(before || after);
+
   return (
     <li className="relative ps-10" dir={dir()}>
-      {/* icon node — distinct tinted background per action */}
       <span
         className={`absolute start-0 top-1 inline-flex h-9 w-9 items-center justify-center rounded-full bg-background ring-2 shadow-sm ${colors.ring} ${colors.icon}`}
       >
@@ -118,41 +128,112 @@ function TimelineRow({
                 <UserCircle className="h-3.5 w-3.5" />
                 {entry.actorName || t("audit.unknownActor")}
               </span>
-              {entry.actorPhone && (
-                <span className="font-mono">· {entry.actorPhone}</span>
-              )}
+              {entry.actorPhone && <span className="font-mono">· {entry.actorPhone}</span>}
               <span>·</span>
-              <span title={absolute}>
-                {relative} · {absolute}
-              </span>
-              {entry.ip && (
-                <span className="font-mono">· {entry.ip}</span>
-              )}
+              <span title={absolute}>{relative} · {absolute}</span>
+              {entry.ip && <span className="font-mono">· {entry.ip}</span>}
             </div>
           </div>
         </div>
 
-        {detailsObj && (
+        {(hasDiff || otherDetails) && (
           <Collapsible open={open} onOpenChange={setOpen} className="mt-2">
             <CollapsibleTrigger asChild>
               <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs">
                 {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3 rtl:rotate-180" />}
-                {open ? t("audit.collapseDetails") : t("audit.expandDetails")}
+                {hasDiff ? (
+                  <span className="inline-flex items-center gap-1"><GitCompare className="size-3" /> {t("audit.changes")}</span>
+                ) : (
+                  open ? t("audit.collapseDetails") : t("audit.expandDetails")
+                )}
               </Button>
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2">
-              <pre
-                dir="ltr"
-                className="overflow-x-auto rounded-lg bg-muted/60 px-3 py-2 text-[11px] leading-relaxed font-mono"
-              >
-                {JSON.stringify(detailsObj, null, 2)}
-              </pre>
+            <CollapsibleContent className="mt-2 space-y-2">
+              {hasDiff && <ChangesTable before={before} after={after} />}
+              {otherDetails && (
+                <pre
+                  dir="ltr"
+                  className="overflow-x-auto rounded-lg bg-muted/60 px-3 py-2 text-[11px] leading-relaxed font-mono"
+                >
+                  {JSON.stringify(otherDetails, null, 2)}
+                </pre>
+              )}
             </CollapsibleContent>
           </Collapsible>
         )}
       </div>
     </li>
   );
+}
+
+// --- Before/After Diff Table ---
+function ChangesTable({
+  before, after,
+}: { before?: Record<string, unknown>; after?: Record<string, unknown> }) {
+  const { t, dir } = useApp();
+  const keys = Array.from(new Set([
+    ...Object.keys(before ?? {}),
+    ...Object.keys(after ?? {}),
+  ])).sort();
+
+  if (keys.length === 0) {
+    return <p className="text-xs text-muted-foreground italic">{t("audit.noChanges")}</p>;
+  }
+
+  const rows = keys.map((k) => {
+    const b = before?.[k];
+    const a = after?.[k];
+    let kind: "changed" | "added" | "removed" = "changed";
+    if (b === undefined) kind = "added";
+    else if (a === undefined) kind = "removed";
+    return { k, b, a, kind };
+  });
+
+  const TINT: Record<typeof rows[number]["kind"], string> = {
+    changed: "bg-amber-50 dark:bg-amber-950/30",
+    added: "bg-emerald-50 dark:bg-emerald-950/30",
+    removed: "bg-rose-50 dark:bg-rose-950/30",
+  };
+  const TXT: Record<typeof rows[number]["kind"], string> = {
+    changed: "text-amber-800 dark:text-amber-300",
+    added: "text-emerald-800 dark:text-emerald-300",
+    removed: "text-rose-800 dark:text-rose-300",
+  };
+
+  return (
+    <div className="overflow-x-auto rounded-lg border border-border/60" dir={dir()}>
+      <table className="w-full text-xs">
+        <thead className="bg-muted/50">
+          <tr>
+            <th className="px-2 py-1.5 text-start font-medium text-muted-foreground">{t("audit.field")}</th>
+            <th className="px-2 py-1.5 text-start font-medium text-muted-foreground">{t("audit.before")}</th>
+            <th className="px-2 py-1.5 text-start font-medium text-muted-foreground">{t("audit.after")}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.k} className="border-t border-border/50">
+              <td className="px-2 py-1.5 font-medium align-top">{r.k}</td>
+              <td className={`px-2 py-1.5 align-top font-mono ${r.kind === "added" ? "text-muted-foreground/40" : TXT[r.kind]} ${TINT[r.kind]}`}>
+                {fmtVal(r.b)}
+              </td>
+              <td className={`px-2 py-1.5 align-top font-mono ${r.kind === "removed" ? "text-muted-foreground/40" : TXT[r.kind]} ${TINT[r.kind]}`}>
+                {fmtVal(r.a)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function fmtVal(v: unknown): string {
+  if (v === undefined || v === null) return "—";
+  if (typeof v === "object") {
+    try { return JSON.stringify(v); } catch { return String(v); }
+  }
+  return String(v);
 }
 
 function fmtRelative(iso: string): string {

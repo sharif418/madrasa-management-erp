@@ -26,6 +26,7 @@ export const GET = withSession(async ({ session }) => {
     amount: s.amount,
     type: s.type,
     frequency: s.frequency,
+    lateFeePerDay: s.lateFeePerDay,
     classId: s.classId,
     className: s.class?.name ?? null,
     createdAt: s.createdAt,
@@ -41,7 +42,7 @@ export const POST = withSession(async ({ session, req }) => {
   if (!allowed) return forbidden("No permission to create fee structures");
 
   const body = await req.json().catch(() => ({}));
-  const { name, classId, amount, type, frequency } = body || {};
+  const { name, classId, amount, type, frequency, lateFeePerDay } = body || {};
 
   if (!name || typeof name !== "string" || !name.trim()) {
     return fail("Fee name is required");
@@ -51,6 +52,10 @@ export const POST = withSession(async ({ session, req }) => {
 
   const t: FeeType = VALID_TYPES.includes(type) ? (type as FeeType) : "tuition";
   const f: FeeFreq = VALID_FREQ.includes(frequency) ? (frequency as FeeFreq) : "monthly";
+
+  // late fee: 0 if missing/invalid
+  const lfd = Number(lateFeePerDay);
+  const lateFeeRate = Number.isFinite(lfd) && lfd >= 0 ? lfd : 0;
 
   // Optional classId must belong to tenant
   let resolvedClassId: string | null = null;
@@ -71,6 +76,7 @@ export const POST = withSession(async ({ session, req }) => {
       amount: amt,
       type: t,
       frequency: f,
+      lateFeePerDay: lateFeeRate,
     },
     include: { class: { select: { name: true } } },
   });
@@ -80,7 +86,7 @@ export const POST = withSession(async ({ session, req }) => {
     module: "finance",
     entityId: created.id,
     entityName: created.name,
-    details: { type: t, frequency: f, amount: amt, classId: resolvedClassId },
+    details: { type: t, frequency: f, amount: amt, classId: resolvedClassId, lateFeePerDay: lateFeeRate },
   });
 
   return ok(created, 201);

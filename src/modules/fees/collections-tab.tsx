@@ -2,10 +2,11 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Wallet, TrendingUp, Percent, Inbox } from "lucide-react";
+import { Wallet, TrendingUp, Percent, Inbox, Loader2, Calculator } from "lucide-react";
 import { useApp } from "@/store/app-store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -30,6 +31,7 @@ export function CollectionsTab() {
   });
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [calcLoading, setCalcLoading] = useState(false);
 
   const [status, setStatus] = useState<string>("all");
   const [classId, setClassId] = useState<string>("all");
@@ -60,6 +62,25 @@ export function CollectionsTab() {
   }, [status, classId, type]);
 
   useEffect(() => { void load(); }, [load]);
+
+  const calcLateFees = async () => {
+    setCalcLoading(true);
+    try {
+      const res = await fetch("/api/fees/late-fee", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ classId: classId === "all" ? undefined : classId }),
+      });
+      const j = await res.json();
+      if (!res.ok || !j?.ok) throw new Error(j?.error || "Failed");
+      toast.success(t("fees.lateFeesUpdated", { count: j.data.updated }));
+      await load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setCalcLoading(false);
+    }
+  };
 
   const cur = useMemo(
     () => (n: number) =>
@@ -115,7 +136,7 @@ export function CollectionsTab() {
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger><SelectValue placeholder={t("fees.filterStatus")} /></SelectTrigger>
           <SelectContent>
@@ -145,6 +166,15 @@ export function CollectionsTab() {
             ))}
           </SelectContent>
         </Select>
+        <Button
+          onClick={calcLateFees}
+          disabled={calcLoading}
+          variant="outline"
+          className="gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-900/60 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
+        >
+          {calcLoading ? <Loader2 className="size-4 animate-spin" /> : <Calculator className="size-4" />}
+          {t("fees.calculateLateFees")}
+        </Button>
       </div>
 
       {/* Collections table */}
@@ -170,6 +200,7 @@ export function CollectionsTab() {
                     <TableHead className="hidden md:table-cell">{t("fees.feeType")}</TableHead>
                     <TableHead className="text-end">{t("fees.amount")}</TableHead>
                     <TableHead className="text-end hidden sm:table-cell">{t("fees.paidAmount")}</TableHead>
+                    <TableHead className="text-end hidden md:table-cell">{t("fees.lateFee")}</TableHead>
                     <TableHead>{t("common.status")}</TableHead>
                     <TableHead className="hidden lg:table-cell">{t("fees.method")}</TableHead>
                     <TableHead className="hidden md:table-cell">{t("fees.dueDate")}</TableHead>
@@ -197,6 +228,15 @@ export function CollectionsTab() {
                       <TableCell className="text-end tabular-nums">৳{cur(c.amount)}</TableCell>
                       <TableCell className="text-end tabular-nums hidden sm:table-cell">
                         ৳{cur(c.paidAmount)}
+                      </TableCell>
+                      <TableCell className="text-end tabular-nums hidden md:table-cell">
+                        {c.lateFee > 0 ? (
+                          <Badge variant="outline" className="bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300">
+                            +৳{cur(c.lateFee)}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge variant="secondary" className={STATUS_TONES[c.status] || ""}>

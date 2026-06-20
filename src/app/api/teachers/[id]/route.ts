@@ -79,6 +79,8 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
     module: "teachers",
     entityId: updated.id,
     entityName: updated.name,
+    before: existing as Record<string, unknown>,
+    after: updated as Record<string, unknown>,
     details: { updatedFields: Object.keys(data) },
   });
   return ok(updated);

@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import {
   ArrowLeft, BadgeCheck, BookOpenCheck, CalendarCheck, GraduationCap,
-  AlertCircle, Loader2, Wallet, FileText,
+  AlertCircle, Loader2, Wallet, FileText, FolderOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,7 @@ import { ProfileHifzTab } from "./profile-hifz-tab";
 import { ProfileAttendanceTab } from "./profile-attendance-tab";
 import { ProfileFeesTab } from "./profile-fees-tab";
 import { ProfileExamsTab } from "./profile-exams-tab";
+import { ProfileDocumentsTab } from "./documents-tab";
 
 type Props = {
   studentId: string;
@@ -170,6 +171,9 @@ export function StudentProfileView({ studentId, onBack }: Props) {
           <TabsTrigger value="attendance">{t("studentProfile.attendance")}</TabsTrigger>
           <TabsTrigger value="fees">{t("studentProfile.fees")}</TabsTrigger>
           <TabsTrigger value="exams">{t("studentProfile.exams")}</TabsTrigger>
+          <TabsTrigger value="documents" className="gap-1.5">
+            <FolderOpen className="size-3.5" /> {t("student.documents")}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview"><ProfileOverviewTab data={data} locale={locale} /></TabsContent>
@@ -177,6 +181,7 @@ export function StudentProfileView({ studentId, onBack }: Props) {
         <TabsContent value="attendance"><ProfileAttendanceTab data={data} locale={locale} /></TabsContent>
         <TabsContent value="fees"><ProfileFeesTab data={data} locale={locale} /></TabsContent>
         <TabsContent value="exams"><ProfileExamsTab data={data} locale={locale} /></TabsContent>
+        <TabsContent value="documents"><ProfileDocumentsTab studentId={student.id} /></TabsContent>
       </Tabs>
     </div>
   );

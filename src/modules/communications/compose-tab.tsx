@@ -1,6 +1,6 @@
 // Compose tab — message composer with channel/audience selectors + reach preview
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   MessageSquare, Smartphone, MessageCircle, Mail, Send, Users, UserCog,
   GraduationCap, Globe, Info, Loader2,
@@ -47,15 +47,26 @@ const AUDIENCE_ICONS: Record<Audience, typeof Users> = {
 export type ComposeTabProps = {
   reach: { all: number; parents: number; staff: number; students: number };
   onSent: (count: number) => void;
+  prefill?: { title: string; body: string; channel: Channel } | null;
+  prefillKey?: number; // bump to re-apply prefill
 };
 
-export function ComposeTab({ reach, onSent }: ComposeTabProps) {
+export function ComposeTab({ reach, onSent, prefill, prefillKey }: ComposeTabProps) {
   const { t, dir } = useApp();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [channel, setChannel] = useState<Channel>("app");
   const [audience, setAudience] = useState<Audience>("all");
   const [sending, setSending] = useState(false);
+
+  // Apply prefill from "Use Template" action (re-applies whenever prefillKey changes)
+  useEffect(() => {
+    if (prefill) {
+      setTitle(prefill.title);
+      setBody(prefill.body);
+      setChannel(prefill.channel);
+    }
+  }, [prefill, prefillKey]);
 
   const recipientCount = reach[audience];
   const valid = title.trim().length > 0 && body.trim().length > 0 && !sending;

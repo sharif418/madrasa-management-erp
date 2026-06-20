@@ -1,11 +1,11 @@
 "use client";
 // Export cards — 4 export buttons + a fee receipt lookup card.
-// Each export card hits the corresponding GET /api/export/* endpoint and triggers a CSV download.
+// Each export card offers CSV + Excel downloads from GET /api/export/*?format=.
 import * as React from "react";
 import { toast } from "sonner";
 import {
   Users, GraduationCap, Banknote, BookMarked,
-  Download, Loader2, ReceiptText,
+  Download, Loader2, ReceiptText, FileSpreadsheet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -18,36 +18,37 @@ type ExportCardProps = {
   hint: string;
   icon: React.ReactNode;
   endpoint: string;          // e.g. "/api/export/students"
-  filename: string;          // Default download filename from server
+  baseFilename: string;      // e.g. "students" — extension added by format
   accent: string;            // Tailwind gradient e.g. "from-emerald-500 to-teal-600"
 };
 
-function ExportCard({ title, hint, icon, endpoint, filename, accent }: ExportCardProps) {
+function ExportCard({ title, hint, icon, endpoint, baseFilename, accent }: ExportCardProps) {
   const { t } = useApp();
-  const [loading, setLoading] = React.useState(false);
+  const [loading, setLoading] = React.useState<"csv" | "xlsx" | null>(null);
 
-  const onExport = async () => {
-    setLoading(true);
+  const onExport = async (format: "csv" | "xlsx") => {
+    setLoading(format);
     try {
-      const res = await fetch(endpoint, { credentials: "include" });
+      const url = `${endpoint}?format=${format}`;
+      const res = await fetch(url, { credentials: "include" });
       if (!res.ok) {
         const j = await res.json().catch(() => null);
         throw new Error(j?.error || `HTTP ${res.status}`);
       }
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+      const urlObj = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
+      a.href = urlObj;
+      a.download = `${baseFilename}.${format === "csv" ? "csv" : "xlsx"}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(urlObj);
       toast.success(t("importExport.exported"));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Export failed");
     } finally {
-      setLoading(false);
+      setLoading(null);
     }
   };
 
@@ -60,15 +61,24 @@ function ExportCard({ title, hint, icon, endpoint, filename, accent }: ExportCar
         <CardTitle className="text-base">{title}</CardTitle>
         <CardDescription className="text-xs">{hint}</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-2">
         <Button
-          onClick={onExport}
-          disabled={loading}
+          onClick={() => onExport("csv")}
+          disabled={loading !== null}
           variant="outline"
           className="w-full gap-2"
         >
-          {loading ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
-          {loading ? t("importExport.exporting") : t("importExport.exportAll")}
+          {loading === "csv" ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
+          {t("export.csv")}
+        </Button>
+        <Button
+          onClick={() => onExport("xlsx")}
+          disabled={loading !== null}
+          variant="outline"
+          className="w-full gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-900/60 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
+        >
+          {loading === "xlsx" ? <Loader2 className="size-4 animate-spin" /> : <FileSpreadsheet className="size-4" />}
+          {t("export.excel")}
         </Button>
       </CardContent>
     </Card>
@@ -83,7 +93,7 @@ export function ExportCards() {
       hint: t("importExport.exportHint"),
       icon: <Users className="size-5" />,
       endpoint: "/api/export/students",
-      filename: "students.csv",
+      baseFilename: "students",
       accent: "from-emerald-500 to-teal-600",
     },
     {
@@ -91,7 +101,7 @@ export function ExportCards() {
       hint: t("importExport.exportHint"),
       icon: <GraduationCap className="size-5" />,
       endpoint: "/api/export/teachers",
-      filename: "teachers.csv",
+      baseFilename: "teachers",
       accent: "from-teal-500 to-cyan-600",
     },
     {
@@ -99,7 +109,7 @@ export function ExportCards() {
       hint: t("importExport.exportHint"),
       icon: <Banknote className="size-5" />,
       endpoint: "/api/export/transactions",
-      filename: "transactions.csv",
+      baseFilename: "transactions",
       accent: "from-amber-500 to-orange-600",
     },
     {
@@ -107,7 +117,7 @@ export function ExportCards() {
       hint: t("importExport.exportHint"),
       icon: <BookMarked className="size-5" />,
       endpoint: "/api/export/hifz",
-      filename: "hifz-records.csv",
+      baseFilename: "hifz-records",
       accent: "from-violet-500 to-purple-600",
     },
   ];

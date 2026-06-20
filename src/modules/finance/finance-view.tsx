@@ -6,9 +6,10 @@ import { useApp } from "@/store/app-store";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Wallet, ArrowDownCircle, ArrowUpCircle, ArrowLeftRight } from "lucide-react";
+import { Wallet, ArrowDownCircle, ArrowUpCircle, ArrowLeftRight, Receipt } from "lucide-react";
 import { FinanceFunds } from "./finance-funds";
 import { FinanceTransactions } from "./finance-transactions";
+import { ExpensesTab } from "./expenses-tab";
 import type { Overview } from "./finance-types";
 
 export function FinanceView() {
@@ -116,10 +117,13 @@ export function FinanceView() {
       </div>
 
       <Tabs defaultValue="funds" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-md grid-cols-3">
           <TabsTrigger value="funds">{t("finance.funds")}</TabsTrigger>
           <TabsTrigger value="transactions">
             {t("finance.transactions")}
+          </TabsTrigger>
+          <TabsTrigger value="expenses">
+            <Receipt className="size-3.5" /> {t("finance.expenses")}
           </TabsTrigger>
         </TabsList>
 
@@ -133,6 +137,10 @@ export function FinanceView() {
 
         <TabsContent value="transactions" className="mt-4">
           <FinanceTransactions reload={reload} />
+        </TabsContent>
+
+        <TabsContent value="expenses" className="mt-4">
+          <ExpensesTab reloadOverview={reload} />
         </TabsContent>
       </Tabs>
     </div>

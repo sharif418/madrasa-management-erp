@@ -111,11 +111,17 @@ export const PUT = withSession(async ({ session, req, params }) => {
     include: { class: true, wallet: true },
   });
 
+  // Capture before/after for audit — only the scalar fields that changed.
+  const { class: _x, wallet: _y, ...beforeScalars } = existing as Record<string, unknown>;
+  const { class: _a, wallet: _b, ...afterScalars } = updated as Record<string, unknown>;
+
   await auditAfter(session, {
     action: "update",
     module: "students",
     entityId: id,
     entityName: updated.name,
+    before: beforeScalars,
+    after: afterScalars,
     details: { changed: Object.keys(data) },
   });
 

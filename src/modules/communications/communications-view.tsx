@@ -1,8 +1,8 @@
 // CommunicationsView — multi-channel messaging center
-// Tabs: Compose | History
+// Tabs: Compose | History | Templates
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { Send, History as HistoryIcon } from "lucide-react";
+import { Send, History as HistoryIcon, FileText } from "lucide-react";
 import { useApp } from "@/store/app-store";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +15,7 @@ import {
   type AudienceBreakdownItem,
   type RecentMessage,
 } from "./history-tab";
+import { TemplatesTab } from "./templates-tab";
 
 type CommData = {
   recent: RecentMessage[];
@@ -23,11 +24,17 @@ type CommData = {
   reach: { all: number; parents: number; staff: number; students: number };
 };
 
+type TabKey = "compose" | "history" | "templates";
+
+type Prefill = { title: string; body: string; channel: "app" | "sms" | "whatsapp" | "email" };
+
 export function CommunicationsView() {
   const { t, dir } = useApp();
   const [data, setData] = useState<CommData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"compose" | "history">("compose");
+  const [tab, setTab] = useState<TabKey>("compose");
+  const [prefill, setPrefill] = useState<Prefill | null>(null);
+  const [prefillKey, setPrefillKey] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -54,6 +61,12 @@ export function CommunicationsView() {
     }
     toast.success(t("communications.sent", { count }));
     void load();
+  }
+
+  function onUseTemplate(p: Prefill) {
+    setPrefill(p);
+    setPrefillKey((k) => k + 1);
+    setTab("compose");
   }
 
   return (
@@ -90,7 +103,7 @@ export function CommunicationsView() {
           </CardContent>
         </Card>
       ) : (
-        <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
           <TabsList>
             <TabsTrigger value="compose">
               <Send className="size-4" /> {t("communications.compose")}
@@ -98,10 +111,13 @@ export function CommunicationsView() {
             <TabsTrigger value="history">
               <HistoryIcon className="size-4" /> {t("communications.history")}
             </TabsTrigger>
+            <TabsTrigger value="templates">
+              <FileText className="size-4" /> {t("communications.templates")}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="compose" className="mt-4">
-            <ComposeTab reach={data.reach} onSent={onSent} />
+            <ComposeTab reach={data.reach} onSent={onSent} prefill={prefill} prefillKey={prefillKey} />
           </TabsContent>
 
           <TabsContent value="history" className="mt-4">
@@ -110,6 +126,10 @@ export function CommunicationsView() {
               audienceBreakdown={data.audienceBreakdown}
               recent={data.recent}
             />
+          </TabsContent>
+
+          <TabsContent value="templates" className="mt-4">
+            <TemplatesTab onUseTemplate={onUseTemplate} />
           </TabsContent>
         </Tabs>
       )}

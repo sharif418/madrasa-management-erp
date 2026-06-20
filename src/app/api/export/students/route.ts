@@ -1,14 +1,19 @@
-// GET /api/export/students — export all students for the current tenant as CSV.
+// GET /api/export/students — export all students for the current tenant.
+// Query: ?format=csv (default) | xlsx
 // Columns: rollNo, name, nameArabic, gender, phone, guardianName, guardianPhone,
 //           class, isHafiz, isZakatEligible, isActive, admissionDate
 import { db } from "@/lib/db";
 import { unauthorized } from "@/lib/api";
 import { getSession } from "@/lib/session";
 import { toCsv } from "@/lib/csv";
+import { generateExcel, excelResponse } from "@/lib/excel";
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await getSession();
   if (!session) return unauthorized();
+
+  const url = new URL(req.url);
+  const format = url.searchParams.get("format") || "csv";
 
   const students = await db.student.findMany({
     where: { tenantId: session.tenantId },
@@ -36,8 +41,14 @@ export async function GET() {
     s.admissionDate ? s.admissionDate.toISOString().slice(0, 10) : "",
   ]);
 
-  const csv = toCsv([headers, ...rows]);
+  if (format === "xlsx") {
+    const buf = await generateExcel("students", [
+      { name: "Students", headers, rows },
+    ]);
+    return excelResponse(buf, "students.xlsx");
+  }
 
+  const csv = toCsv([headers, ...rows]);
   return new Response(csv, {
     status: 200,
     headers: {

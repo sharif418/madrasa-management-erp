@@ -42,6 +42,7 @@ export const GET = withSession(async ({ session, req }) => {
     feeType: c.feeStructure?.type ?? null,
     amount: c.amount,
     paidAmount: c.paidAmount,
+    lateFee: c.lateFee,
     dueDate: c.dueDate,
     paidDate: c.paidDate,
     status: c.status,
@@ -50,13 +51,13 @@ export const GET = withSession(async ({ session, req }) => {
     createdAt: c.createdAt,
   }));
 
-  // Summary aggregates
+  // Summary aggregates (include lateFee in outstanding)
   const totalCollected = items.reduce((s, c) => s + (c.paidAmount || 0), 0);
   const totalOutstanding = items.reduce(
-    (s, c) => s + Math.max(0, (c.amount || 0) - (c.paidAmount || 0)),
+    (s, c) => s + Math.max(0, (c.amount || 0) + (c.lateFee || 0) - (c.paidAmount || 0)),
     0
   );
-  const totalAmount = items.reduce((s, c) => s + (c.amount || 0), 0);
+  const totalAmount = items.reduce((s, c) => s + (c.amount || 0) + (c.lateFee || 0), 0);
   const collectionRate = totalAmount > 0 ? Math.round((totalCollected / totalAmount) * 100) : 0;
 
   return ok({

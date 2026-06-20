@@ -1,12 +1,17 @@
-// GET /api/export/teachers — export all teachers for the current tenant as CSV.
+// GET /api/export/teachers — export all teachers for the current tenant.
+// Query: ?format=csv (default) | xlsx
 import { db } from "@/lib/db";
 import { unauthorized } from "@/lib/api";
 import { getSession } from "@/lib/session";
 import { toCsv } from "@/lib/csv";
+import { generateExcel, excelResponse } from "@/lib/excel";
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await getSession();
   if (!session) return unauthorized();
+
+  const url = new URL(req.url);
+  const format = url.searchParams.get("format") || "csv";
 
   const teachers = await db.teacher.findMany({
     where: { tenantId: session.tenantId },
@@ -32,8 +37,14 @@ export async function GET() {
     t.address ?? "",
   ]);
 
-  const csv = toCsv([headers, ...rows]);
+  if (format === "xlsx") {
+    const buf = await generateExcel("teachers", [
+      { name: "Teachers", headers, rows },
+    ]);
+    return excelResponse(buf, "teachers.xlsx");
+  }
 
+  const csv = toCsv([headers, ...rows]);
   return new Response(csv, {
     status: 200,
     headers: {

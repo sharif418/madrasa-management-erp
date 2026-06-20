@@ -7,6 +7,7 @@ import { checkPermission } from "@/lib/permissions";
 
 const PERSON_TYPES = new Set(["student", "teacher"]);
 const STATUSES = new Set(["present", "absent", "late", "leave"]);
+const SESSIONS = new Set(["morning", "afternoon", "full"]);
 
 // GET — list attendance records with person name resolution
 export const GET = withSession(async ({ session, req }) => {
@@ -14,12 +15,14 @@ export const GET = withSession(async ({ session, req }) => {
   const dateStr = url.searchParams.get("date") || "";
   const personType = url.searchParams.get("personType") || "";
   const status = url.searchParams.get("status") || "";
+  const sess = url.searchParams.get("session") || "";
   const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
   const limit = Math.min(200, Math.max(1, parseInt(url.searchParams.get("limit") || "50", 10)));
 
   const where: Record<string, unknown> = { tenantId: session.tenantId };
   if (personType && PERSON_TYPES.has(personType)) where.personType = personType;
   if (status && STATUSES.has(status)) where.status = status;
+  if (sess && SESSIONS.has(sess)) where.session = sess;
   if (dateStr) {
     const d = new Date(dateStr);
     if (!isNaN(d.getTime())) {
@@ -78,8 +81,8 @@ export const GET = withSession(async ({ session, req }) => {
 });
 
 // POST — bulk upsert attendance for a single date
-type Entry = { personId?: string; personType?: string; status?: string; notes?: string };
-type Payload = { date?: string; entries?: Entry[] };
+type Entry = { personId?: string; personType?: string; status?: string; notes?: string; session?: string };
+type Payload = { date?: string; entries?: Entry[]; session?: string };
 
 export const POST = withSession(async ({ session, req }) => {
   // RBAC: require attendance:create permission
@@ -89,6 +92,9 @@ export const POST = withSession(async ({ session, req }) => {
   const body = (await req.json().catch(() => ({}))) as Payload;
   const entries = Array.isArray(body.entries) ? body.entries : [];
   if (entries.length === 0) return fail("No attendance entries provided");
+
+  // Resolve session — body-level default or per-entry override ("full" by default)
+  const bodySession = SESSIONS.has(body.session as string) ? (body.session as string) : "full";
 
   // Resolve date (default today, midnight local)
   let date: Date;
@@ -106,6 +112,7 @@ export const POST = withSession(async ({ session, req }) => {
     if (!e.personId) return fail(`Entry ${i + 1}: personId is required`);
     if (!e.personType || !PERSON_TYPES.has(e.personType)) return fail(`Entry ${i + 1}: invalid personType`);
     if (!e.status || !STATUSES.has(e.status)) return fail(`Entry ${i + 1}: invalid status`);
+    if (e.session && !SESSIONS.has(e.session)) return fail(`Entry ${i + 1}: invalid session`);
   }
 
   // Verify persons belong to tenant
@@ -120,16 +127,18 @@ export const POST = withSession(async ({ session, req }) => {
     if (c !== tchIds.length) return fail("Some teachers do not belong to your tenant");
   }
 
-  // Upsert each entry (unique constraint: [tenantId, personId, personType, date])
+  // Upsert each entry (unique constraint: [tenantId, personId, personType, date, session])
   const results = await db.$transaction(
-    entries.map((e) =>
-      db.attendance.upsert({
+    entries.map((e) => {
+      const sess = (e.session && SESSIONS.has(e.session)) ? e.session : bodySession;
+      return db.attendance.upsert({
         where: {
-          tenantId_personId_personType_date: {
+          tenantId_personId_personType_date_session: {
             tenantId: session.tenantId,
             personId: e.personId!,
             personType: e.personType!,
             date,
+            session: sess,
           },
         },
         create: {
@@ -138,6 +147,7 @@ export const POST = withSession(async ({ session, req }) => {
           personType: e.personType!,
           date,
           status: e.status!,
+          session: sess,
           notes: e.notes?.trim() || null,
           markedBy: session.userId,
         },
@@ -146,16 +156,19 @@ export const POST = withSession(async ({ session, req }) => {
           notes: e.notes?.trim() || null,
           markedBy: session.userId,
         },
-      })
-    )
+      });
+    })
   );
 
   await auditAfter(session, {
     action: "update",
     module: "attendance",
-    entityName: `Attendance — ${date.toISOString().slice(0, 10)}`,
-    details: { date: date.toISOString(), count: results.length, types: { student: stuIds.length, teacher: tchIds.length } },
+    entityName: `Attendance — ${date.toISOString().slice(0, 10)} (${bodySession})`,
+    details: {
+      date: date.toISOString(), session: bodySession, count: results.length,
+      types: { student: stuIds.length, teacher: tchIds.length },
+    },
   });
 
-  return ok({ saved: results.length, date: date.toISOString() });
+  return ok({ saved: results.length, date: date.toISOString(), session: bodySession });
 });

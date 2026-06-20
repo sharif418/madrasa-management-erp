@@ -85,6 +85,9 @@ model Tenant {
   ptmSessions   PtmSession[]
   websitePages  WebsitePage[]
   settings      Setting[]
+  messageTemplates MessageTemplate[]
+  studentDocuments StudentDocument[]
+  staffLeaves   StaffLeave[]
 }
 
 model User {
@@ -217,6 +220,7 @@ model Student {
   transportAllocations TransportAllocation[]
   quranLogs            QuranLog[]
   ptmSessions          PtmSession[]
+  studentDocuments     StudentDocument[]
 
   @@unique([tenantId, rollNo])
 }
@@ -242,6 +246,28 @@ model Teacher {
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   payrolls    Payroll[]
   ptmSessions PtmSession[]
+  staffLeaves StaffLeave[]
+}
+
+// ============================================================
+// 2c. STAFF LEAVE — application + approval workflow
+// ============================================================
+
+model StaffLeave {
+  id          String   @id @default(cuid())
+  tenantId    String
+  teacherId   String
+  type        String   // sick, casual, annual, maternity, emergency
+  startDate   DateTime
+  endDate     DateTime
+  reason      String
+  status      String   @default("pending") // pending, approved, rejected
+  approvedBy  String?
+  approvedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  teacher     Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 }
 
 // ============================================================
@@ -397,6 +423,7 @@ model FeeStructure {
   amount    Float
   type      String   // tuition, admission, exam, hostel, transport
   frequency String   @default("monthly") // monthly, quarterly, yearly, one_time
+  lateFeePerDay Float @default(0) // automatic late fee per overdue day
   createdAt DateTime @default(now())
 
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -411,6 +438,7 @@ model FeeCollection {
   feeStructureId String?
   amount     Float
   paidAmount Float
+  lateFee    Float    @default(0) // accumulated late-fee amount
   dueDate    DateTime?
   paidDate   DateTime?
   status     String   @default("pending") // pending, partial, paid, overdue
@@ -452,6 +480,7 @@ model Attendance {
   personType String  // student, teacher
   date       DateTime
   status     String   // present, absent, late, leave
+  session    String   @default("full") // morning, afternoon, full
   notes      String?
   markedBy   String?
   createdAt  DateTime @default(now())
@@ -459,7 +488,7 @@ model Attendance {
   tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   marker    User?    @relation(fields: [markedBy], references: [id], onDelete: SetNull)
 
-  @@unique([tenantId, personId, personType, date])
+  @@unique([tenantId, personId, personType, date, session])
 }
 
 model Exam {
@@ -1159,4 +1188,39 @@ model Setting {
   tenant    Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, key])
+}
+
+model MessageTemplate {
+  id          String   @id @default(cuid())
+  tenantId    String
+  name        String
+  channel     String   @default("sms") // sms, whatsapp, email, app
+  subject     String?
+  body        String
+  variables   String?  // JSON array of variable names like ["studentName", "className"]
+  category    String?  // fee_reminder, absence_alert, event_notice, exam_result, general
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, category])
+}
+
+model StudentDocument {
+  id          String   @id @default(cuid())
+  tenantId    String
+  studentId   String
+  title       String
+  type        String   @default("other") // birth_certificate, transfer_certificate, medical, photo, other
+  fileName    String
+  fileSize    Int
+  mimeType    String
+  data        String   // base64 encoded file data (stored as text for SQLite simplicity)
+  uploadedAt  DateTime @default(now())
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, studentId, type])
 }

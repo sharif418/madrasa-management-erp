@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Search, Users, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Search, Users, Loader2, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import { useApp } from "@/store/app-store";
 import { TeacherForm } from "./teacher-form";
 import { TeachersGrid, TeachersEmptyState } from "./teachers-grid";
 import { TeachersPayrollTab } from "./teachers-payroll-tab";
+import { LeaveTab } from "./leave-tab";
 import { SPECIALIZATIONS, type TeacherDTO, type TeacherListResponse } from "./types";
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -131,9 +132,13 @@ export function TeachersView() {
       </header>
 
       <Tabs value={tab} onValueChange={setTab} dir={dir()} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-md grid-cols-3">
           <TabsTrigger value="staff">{t("nav.teachers")}</TabsTrigger>
           <TabsTrigger value="payroll">{t("teachers.payroll")}</TabsTrigger>
+          <TabsTrigger value="leave" className="gap-1">
+            <CalendarDays className="size-3.5" />
+            {t("teachers.leave")}
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="staff" className="mt-4">
           <StaffTabContent
@@ -157,6 +162,9 @@ export function TeachersView() {
         </TabsContent>
         <TabsContent value="payroll" className="mt-4">
           <TeachersPayrollTab />
+        </TabsContent>
+        <TabsContent value="leave" className="mt-4">
+          <LeaveTab />
         </TabsContent>
       </Tabs>
 

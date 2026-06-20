@@ -9,6 +9,7 @@ export type FeeStructure = {
   amount: number;
   type: FeeType | string;
   frequency: FeeFrequency | string;
+  lateFeePerDay: number;
   classId: string | null;
   className: string | null;
   createdAt: string;
@@ -25,6 +26,7 @@ export type FeeCollectionItem = {
   feeType: FeeType | string | null;
   amount: number;
   paidAmount: number;
+  lateFee: number;
   dueDate: string | null;
   paidDate: string | null;
   status: CollectionStatus | string;

@@ -1,17 +1,23 @@
 "use client";
 // AttendanceMarker — list of persons (students or teachers) with status radios
-// for a single date. Supports "Mark All Present" + Save (submits array via POST).
+// for a single date + session. Supports "Mark All Present" + Save (submits array via POST).
 import * as React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Save, Zap } from "lucide-react";
+import { Save, Zap, Sunrise, Sunset, CalendarDays } from "lucide-react";
 import { useApp } from "@/store/app-store";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { STATUS_OPTIONS, StatusButton, type Status } from "./attendance-status";
+import {
+  Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+
+type Session = "morning" | "afternoon" | "full";
 
 type Person = {
   id: string;
@@ -38,6 +44,7 @@ export function AttendanceMarker({
   const [marks, setMarks] = React.useState<Record<string, Status>>({});
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
+  const [session, setSession] = React.useState<Session>("full");
 
   const dateKey = React.useMemo(() => {
     const d = new Date(date);
@@ -77,13 +84,13 @@ export function AttendanceMarker({
     return () => { alive = false; };
   }, [personType, classId]);
 
-  // Load existing attendance for this date + personType
+  // Load existing attendance for this date + personType + session
   React.useEffect(() => {
     let alive = true;
     (async () => {
       try {
         const r = await fetch(
-          `/api/attendance?date=${encodeURIComponent(dateKey)}&personType=${personType}&limit=200`,
+          `/api/attendance?date=${encodeURIComponent(dateKey)}&personType=${personType}&session=${session}&limit=200`,
           { cache: "no-store" }
         );
         const j = await r.json();
@@ -98,7 +105,7 @@ export function AttendanceMarker({
       }
     })();
     return () => { alive = false; };
-  }, [dateKey, personType]);
+  }, [dateKey, personType, session]);
 
   const setOne = (id: string, s: Status) =>
     setMarks((prev) => ({ ...prev, [id]: s }));
@@ -122,7 +129,7 @@ export function AttendanceMarker({
       const r = await fetch("/api/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: dateKey, entries }),
+        body: JSON.stringify({ date: dateKey, session, entries }),
       });
       const j = await r.json();
       if (!r.ok || !j?.ok) throw new Error(j?.error || "Save failed");
@@ -149,8 +156,28 @@ export function AttendanceMarker({
   return (
     <Card>
       <CardContent className="space-y-4 p-4">
-        {/* Summary bar with colored dots */}
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-muted/30 p-2.5">
+        {/* Session selector + Summary bar with colored dots */}
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-muted/30 p-2.5">
+          <div className="flex items-center gap-2">
+            <Label className="text-xs text-muted-foreground">{t("attendance.session")}</Label>
+            <Select value={session} onValueChange={(v) => setSession(v as Session)}>
+              <SelectTrigger className="h-8 w-36 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="full">
+                  <span className="flex items-center gap-1.5"><CalendarDays className="size-3.5" /> {t("attendance.fullDay")}</span>
+                </SelectItem>
+                <SelectItem value="morning">
+                  <span className="flex items-center gap-1.5"><Sunrise className="size-3.5" /> {t("attendance.morning")}</span>
+                </SelectItem>
+                <SelectItem value="afternoon">
+                  <span className="flex items-center gap-1.5"><Sunset className="size-3.5" /> {t("attendance.afternoon")}</span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="h-4 w-px bg-border" />
           {STATUS_OPTIONS.map((opt) => {
             const c = counts[opt.value];
             return (

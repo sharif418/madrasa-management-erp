@@ -1,18 +1,19 @@
 "use client";
-// ExamsView — top-level shell with two tabs: Exams (list + create) and Report Cards.
+// ExamsView — top-level shell with three tabs: Exams (list + create), Report Cards, Tabulation.
 import * as React from "react";
-import { GraduationCap, FileText } from "lucide-react";
+import { GraduationCap, FileText, Table2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useApp } from "@/store/app-store";
 import { ExamsList } from "./exams-list";
 import { ExamForm } from "./exam-form";
 import { MarksEntry } from "./marks-entry";
 import { ReportCardView } from "./report-card-view";
+import { TabulationTab } from "./tabulation-tab";
 import type { ExamListItem, ClassOption } from "./exams-types";
 
 export function ExamsView() {
   const { t, dir } = useApp();
-  const [tab, setTab] = React.useState<"exams" | "reports">("exams");
+  const [tab, setTab] = React.useState<"exams" | "reports" | "tabulation">("exams");
 
   // Exams list state
   const [exams, setExams] = React.useState<ExamListItem[]>([]);
@@ -88,13 +89,16 @@ export function ExamsView() {
       </header>
 
       {/* Tabs */}
-      <Tabs value={tab} onValueChange={(v) => setTab(v as "exams" | "reports")}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as "exams" | "reports" | "tabulation")}>
         <TabsList className="flex w-fit">
           <TabsTrigger value="exams" className="gap-1.5">
             <GraduationCap className="size-4" /> {t("exams.title")}
           </TabsTrigger>
           <TabsTrigger value="reports" className="gap-1.5">
             <FileText className="size-4" /> {t("exams.reportCards")}
+          </TabsTrigger>
+          <TabsTrigger value="tabulation" className="gap-1.5">
+            <Table2 className="size-4" /> {t("exams.tabulation")}
           </TabsTrigger>
         </TabsList>
 
@@ -117,6 +121,10 @@ export function ExamsView() {
 
         <TabsContent value="reports" className="focus-visible:outline-none">
           <ReportCardView exams={exams} />
+        </TabsContent>
+
+        <TabsContent value="tabulation" className="focus-visible:outline-none">
+          <TabulationTab exams={exams} />
         </TabsContent>
       </Tabs>
 

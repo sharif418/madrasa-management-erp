@@ -31,6 +31,7 @@ export function FeeStructureForm({ open, onOpenChange, initial, classes, onSaved
   const [type, setType] = useState<string>("tuition");
   const [frequency, setFrequency] = useState<string>("monthly");
   const [amount, setAmount] = useState<string>("");
+  const [lateFeePerDay, setLateFeePerDay] = useState<string>("");
   const [classId, setClassId] = useState<string>("all");
   const [saving, setSaving] = useState(false);
 
@@ -40,6 +41,7 @@ export function FeeStructureForm({ open, onOpenChange, initial, classes, onSaved
     setType(initial?.type ?? "tuition");
     setFrequency(initial?.frequency ?? "monthly");
     setAmount(initial ? String(initial.amount) : "");
+    setLateFeePerDay(initial ? String(initial.lateFeePerDay ?? 0) : "");
     setClassId(initial?.classId ?? "all");
   }, [open, initial]);
 
@@ -54,11 +56,13 @@ export function FeeStructureForm({ open, onOpenChange, initial, classes, onSaved
 
     setSaving(true);
     try {
+      const lfd = Number(lateFeePerDay);
       const payload = {
         name: trimmed,
         type,
         frequency,
         amount: amt,
+        lateFeePerDay: Number.isFinite(lfd) && lfd >= 0 ? lfd : 0,
         classId: classId === "all" ? null : classId,
       };
       const url = initial ? `/api/fee-structures/${initial.id}` : "/api/fee-structures";
@@ -142,17 +146,35 @@ export function FeeStructureForm({ open, onOpenChange, initial, classes, onSaved
           )}
         </div>
         <div className="space-y-1.5">
-          <Label>{t("fees.selectClass")}</Label>
-          <Select value={classId} onValueChange={setClassId}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("fees.allClasses")}</SelectItem>
-              {classes.map((c) => (
-                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Label htmlFor="fee-late">{t("fees.lateFeePerDay")} (৳)</Label>
+          <Input
+            id="fee-late"
+            type="number"
+            min="0"
+            step="1"
+            value={lateFeePerDay}
+            onChange={(e) => setLateFeePerDay(e.target.value)}
+            placeholder="0"
+          />
+          <p className="text-xs text-muted-foreground">
+            {Number.isFinite(Number(lateFeePerDay)) && Number(lateFeePerDay) > 0
+              ? `৳${cur(Number(lateFeePerDay))} × ${t("teachers.days")}`
+              : t("fees.lateFee")}
+          </p>
         </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>{t("fees.selectClass")}</Label>
+        <Select value={classId} onValueChange={setClassId}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("fees.allClasses")}</SelectItem>
+            {classes.map((c) => (
+              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex justify-end gap-2 pt-2">

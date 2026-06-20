@@ -22,7 +22,7 @@ export const PUT = withSession(async ({ session, req, params }) => {
   if (!existing) return fail("Fee structure not found", 404);
 
   const body = await req.json().catch(() => ({}));
-  const { name, classId, amount, type, frequency } = body || {};
+  const { name, classId, amount, type, frequency, lateFeePerDay } = body || {};
 
   const data: Record<string, unknown> = {};
   if (typeof name === "string" && name.trim()) data.name = name.trim();
@@ -31,6 +31,11 @@ export const PUT = withSession(async ({ session, req, params }) => {
   if (typeof type === "string" && VALID_TYPES.includes(type as never)) data.type = type;
   if (typeof frequency === "string" && VALID_FREQ.includes(frequency as never)) {
     data.frequency = frequency;
+  }
+  // lateFeePerDay: optional, must be >= 0
+  if (lateFeePerDay !== undefined) {
+    const lfd = Number(lateFeePerDay);
+    if (Number.isFinite(lfd) && lfd >= 0) data.lateFeePerDay = lfd;
   }
 
   // classId: null = all classes, string = must belong to tenant

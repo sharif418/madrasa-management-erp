@@ -7,6 +7,7 @@ import { NotificationBell } from "@/components/shell/notification-bell";
 import { PrayerTimeWidget } from "@/components/shell/prayer-time-widget";
 import { Menu, LogOut, Moon, Search } from "lucide-react";
 import { toast } from "sonner";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 
 export function AppHeader({
   onOpenCommandPalette,
@@ -67,6 +68,7 @@ export function AppHeader({
             <span className="sr-only">{t("command.hint")}</span>
           </Button>
           <LanguageSwitcher compact />
+          <ThemeToggle />
           <NotificationBell />
           <Button variant="ghost" size="icon" onClick={onLogout} title={t("auth.logout")}>
             <LogOut className="h-4 w-4" />
