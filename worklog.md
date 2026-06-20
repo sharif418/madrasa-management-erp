@@ -3778,3 +3778,103 @@ Stage Summary:
 4. **Multi-language content** — allow madrasa to enter content in multiple languages.
 5. **Performance** — production build for deployment (dev server has Turbopack panics on large codebase).
 6. **Data migration tools** — bulk import from Excel/CSV (current import is CSV only).
+
+---
+Task ID: GAP-ANALYSIS (Blueprint v2.0 vs Our System)
+Agent: Main Orchestrator (Z.ai)
+Task: Analyze the PDF blueprint plan vs our implemented system, identify missing features
+
+## Blueprint Analysis Summary
+
+The PDF blueprint (54 pages) describes a comprehensive Madrasa Management System with:
+- 47 database tables, 23 enums, 60+ indexes
+- 14 core modules + additional features
+- 10-phase development plan (35-45 weeks)
+- Multi-tenant SaaS with PostgreSQL + Prisma + Next.js
+
+## What We ALREADY Have (✅ Built):
+
+1. ✅ Multi-tenant SaaS (row-level tenantId isolation)
+2. ✅ Trilingual (Bangla/English/Arabic + RTL)
+3. ✅ Islamic emerald/teal design system
+4. ✅ Student Management (CRUD + profile + bulk actions)
+5. ✅ Hifz Tracking (Sabak/Sabaq Para/Dhor + 30-para grid + 114-surah tracker)
+6. ✅ Muhasaba (5 Salah + adhkar + akhlaq + analytics)
+7. ✅ Finance (5 funds + Tamlik automation + transactions)
+8. ✅ Student Wallet (topup + history)
+9. ✅ Fee Management (structures + bulk generation + collections + waivers)
+10. ✅ Exam & Results (scheduling + marks entry + report cards + seat plan + admit cards)
+11. ✅ Attendance (daily marking + stats + bulk)
+12. ✅ Teachers/Staff (CRUD + payroll)
+13. ✅ Academic (classes + subjects + levels + timetable)
+14. ✅ Hostel (hierarchy + mess + gate pass + visitors)
+15. ✅ Library (books + lending + fines)
+16. ✅ Transport (vehicles + routes + allocations)
+17. ✅ Donors (profiles + donations + analytics)
+18. ✅ Health (records + vaccinations)
+19. ✅ Inventory (assets + consumables)
+20. ✅ Feedback & Complaints
+21. ✅ Admission Portal (applications + review)
+22. ✅ Alumni (graduate tracking + mentors)
+23. ✅ Events & Calendar (Hijri dates + Islamic events)
+24. ✅ Notices (types + audiences + CRUD)
+25. ✅ Website CMS (live preview + page builder + 7 section types)
+26. ✅ Notification Center (bell + dropdown)
+27. ✅ Communication Center (multi-channel: SMS/WhatsApp/Email/In-App)
+28. ✅ AI Assistant (context-aware LLM chat + insights)
+29. ✅ Analytics & Insights (predictive + trends + at-risk)
+30. ✅ Dashboard (4 role-aware: Admin/Teacher/Parent/Student)
+31. ✅ Reports (5 types + PDF export)
+32. ✅ Custom Report Builder (6 entities + column selection + filters)
+33. ✅ Daily Report (10-domain end-of-day summary)
+34. ✅ Billing/Subscription (4 plans + payment UI)
+35. ✅ Backup/Restore (38-table JSON export)
+36. ✅ Import/Export (CSV students/teachers)
+37. ✅ Settings (info + appearance + modules + roles + integrations)
+38. ✅ Feature Toggles (per-tenant module enable/disable)
+39. ✅ RBAC (35+ protected routes)
+40. ✅ PWA (installable + offline + service worker)
+41. ✅ PDF Generation (14 generators: reports, receipts, ID cards, certificates, admit cards, transfer certificate, custom reports)
+42. ✅ Global Search (cross-entity: students/teachers/donors/books/transactions)
+43. ✅ Command Palette (⌘K + navigation + quick actions)
+44. ✅ Guardian Portal (public phone lookup + read-only view)
+45. ✅ Quran Reading Log (daily tracking + Khatm progress)
+46. ✅ PTM Scheduler (parent-teacher meetings)
+47. ✅ Theme Customizer (5 presets + custom color picker)
+48. ✅ Saved Searches + Filter Persistence
+49. ✅ Lazy Loading + Code Splitting (fixes dev server OOM)
+50. ✅ Performance Caching (dashboard 10×, analytics 4×)
+
+## What's MISSING (❌ Gaps from Blueprint):
+
+### HIGH PRIORITY (Core Islamic Features):
+1. ❌ **Tajweed Assessment** — Structured evaluation of Quran recitation with rubric (madd, waqf, tizkeer scores, total 0-100, improvement areas). We only have 1-5 star quality ratings.
+2. ❌ **Prayer Time Integration** — Automatic prayer time display based on geo-location (lat/lng). Blueprint has latitude/longitude on Tenant.
+3. ❌ **Spaced Repetition for Hifz** — Auto-generated revision schedule based on spaced repetition algorithm (nextRevisionDate, revisionCount, strengthScore).
+4. ❌ **Muhasaba Streak Tracking** — Computed streak data (currentStreak, longestStreak, lastEntryDate, monthlyAverage, badges). We have raw records but no streak computation.
+5. ❌ **QR Code Student IDs** — QR codes on ID cards for mobile attendance scanning.
+
+### MEDIUM PRIORITY (Operational Features):
+6. ❌ **Leave Management** — Staff leave application + approval workflow.
+7. ❌ **Late Fee Automation** — Automatic late fee calculation (lateFeePerDay field in FeeAssignment).
+8. ❌ **SMS Templates** — Reusable SMS message templates (not just one-off messages).
+9. ❌ **Expense Management** — Dedicated expense tracking with categories, paidTo, receipt attachment.
+10. ❌ **Dark Mode** — next-themes is installed but no dark mode toggle implemented.
+11. ❌ **Excel Export** — .xlsx export (we only have CSV).
+12. ❌ **Multi-period Attendance** — Morning + afternoon session support.
+13. ❌ **Tabulation Sheet** — Exam tabulation sheet generation (class-wide results grid).
+14. ❌ **Student Document Gallery** — Upload/store documents (birth certificate, previous TC, etc.).
+
+### LOW PRIORITY (Infrastructure):
+15. ❌ **Docker Setup** — Dockerfile + docker-compose.yml for deployment.
+16. ❌ **Audit Log with Before/After Changes** — Our audit log doesn't capture field-level changes (before/after JSON).
+17. ❌ **Guardian as Separate Entity** — Blueprint has Guardian table with own fields; we embed in Student.
+18. ❌ **Class-Subject-Teacher Mapping** — Blueprint has ClassSubject junction with teacherId + marks overrides.
+19. ❌ **Media Gallery** — Media management for website CMS (images, videos).
+20. ❌ **Subscription Model** — Separate Subscription table with billing cycle, transaction ID.
+
+## Summary:
+- **Built**: 50+ features/modules
+- **Missing**: 20 features (5 high, 9 medium, 6 low priority)
+- **Our system is actually MORE comprehensive** than the blueprint in many areas (AI Assistant, Custom Reports, Daily Report, Backup/Restore, PWA, Command Palette, Guardian Portal, Quran Reading Log, PTM Scheduler, Theme Customizer — none of these are in the blueprint)
+- **Blueprint is more detailed** in Islamic-specific features (Tajweed Assessment, Prayer Times, Spaced Repetition, Streak Tracking)
