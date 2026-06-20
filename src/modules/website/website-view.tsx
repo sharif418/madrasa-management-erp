@@ -2,7 +2,7 @@
 // Tabs: Live Preview | Settings
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { Globe, Eye, Settings as SettingsIcon } from "lucide-react";
+import { Globe, Eye, Settings as SettingsIcon, FileText } from "lucide-react";
 import { useApp } from "@/store/app-store";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { WebsitePreviewTab } from "./website-preview-tab";
 import { WebsiteSettingsTab } from "./website-settings-tab";
+import { PagesTab } from "./pages-tab";
 
 export type WebsiteStats = {
   activeStudents: number;
@@ -59,7 +60,7 @@ export function WebsiteView() {
   const { t, dir } = useApp();
   const [data, setData] = useState<WebsiteData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"preview" | "settings">("preview");
+  const [tab, setTab] = useState<"preview" | "settings" | "pages">("preview");
   // About text is editable live in Settings — applied to preview instantly
   const [aboutText, setAboutText] = useState("");
 
@@ -118,6 +119,9 @@ export function WebsiteView() {
             <TabsTrigger value="preview">
               <Eye className="size-4" /> {t("website.livePreview")}
             </TabsTrigger>
+            <TabsTrigger value="pages">
+              <FileText className="size-4" /> {t("website.pages")}
+            </TabsTrigger>
             <TabsTrigger value="settings">
               <SettingsIcon className="size-4" /> {t("website.settings")}
             </TabsTrigger>
@@ -125,6 +129,9 @@ export function WebsiteView() {
 
           <TabsContent value="preview" className="mt-4">
             <WebsitePreviewTab data={data} aboutText={aboutText} />
+          </TabsContent>
+          <TabsContent value="pages" className="mt-4">
+            <PagesTab />
           </TabsContent>
           <TabsContent value="settings" className="mt-4">
             <WebsiteSettingsTab

@@ -80,6 +80,8 @@ model Tenant {
   payrolls      Payroll[]
   seatPlans     SeatPlan[]
   ptmSessions   PtmSession[]
+  websitePages  WebsitePage[]
+  settings      Setting[]
 }
 
 model User {
@@ -1088,4 +1090,38 @@ model QuranLog {
 
   @@index([tenantId, date])
   @@index([tenantId, studentId])
+}
+
+// ============================================================
+// WEBSITE CMS — Page Builder
+// ============================================================
+model WebsitePage {
+  id          String   @id @default(cuid())
+  tenantId    String
+  title       String
+  slug        String
+  sections    String   // JSON array of section objects
+  isPublished Boolean  @default(false)
+  isHomepage  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, isPublished])
+}
+
+// ============================================================
+// KEY-VALUE SETTINGS (gateway credentials, etc.)
+// ============================================================
+model Setting {
+  id        String  @id @default(cuid())
+  tenantId  String
+  key       String  // "sms_provider", "sms_api_key", "whatsapp_provider", etc.
+  value     String
+
+  tenant    Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, key])
 }
