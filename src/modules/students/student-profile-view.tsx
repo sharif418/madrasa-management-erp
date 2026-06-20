@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import {
   ArrowLeft, BadgeCheck, BookOpenCheck, CalendarCheck, GraduationCap,
-  AlertCircle, Loader2, Wallet,
+  AlertCircle, Loader2, Wallet, FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +35,30 @@ export function StudentProfileView({ studentId, onBack }: Props) {
   const [data, setData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tcLoading, setTcLoading] = useState(false);
+
+  const handleTransferCert = async () => {
+    setTcLoading(true);
+    try {
+      const res = await fetch(`/api/students/${encodeURIComponent(studentId)}/transfer-certificate`, {
+        credentials: "same-origin",
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({ error: "Failed" }));
+        throw new Error(j?.error || "Failed");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+      toast({ title: t("student.transferCertificateGenerated") });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed";
+      toast({ title: msg, variant: "destructive" });
+    } finally {
+      setTcLoading(false);
+    }
+  };
 
   useEffect(() => {
     let alive = true;
@@ -82,8 +106,20 @@ export function StudentProfileView({ studentId, onBack }: Props) {
 
   return (
     <div dir={dir} className="space-y-6 p-4 sm:p-6">
-      {/* Back */}
-      <BackButton onClick={onBack} label={t("studentProfile.back")} dir={dir} />
+      {/* Back + actions */}
+      <div className="flex items-center justify-between gap-2">
+        <BackButton onClick={onBack} label={t("studentProfile.back")} dir={dir} />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleTransferCert}
+          disabled={tcLoading}
+          className="gap-1.5 border-emerald-300/60 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
+        >
+          {tcLoading ? <Loader2 className="size-4 animate-spin" /> : <FileText className="size-4" />}
+          {t("student.transferCertificate")}
+        </Button>
+      </div>
 
       {/* Header card */}
       <Card className="overflow-hidden">

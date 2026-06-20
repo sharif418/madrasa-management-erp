@@ -42,6 +42,9 @@ import { DailyReportView } from "@/modules/daily-report/daily-report-view";
 import { FeesView } from "@/modules/fees/fees-view";
 import { SeatPlanView } from "@/modules/seatplan/seatplan-view";
 import { WaiversView } from "@/modules/waivers/waivers-view";
+import { PtmView } from "@/modules/ptm/ptm-view";
+import { QuranLogView } from "@/modules/quranlog/quranlog-view";
+import { OfflineIndicator } from "@/components/shared/offline-indicator";
 
 export function AppShell() {
   const { view } = useApp();
@@ -86,6 +89,8 @@ export function AppShell() {
       case "fees": return <FeesView />;
       case "waivers": return <WaiversView />;
       case "seatplan": return <SeatPlanView />;
+      case "ptm": return <PtmView />;
+      case "quranlog": return <QuranLogView />;
       default: return <DashboardRouter />;
     }
   };
@@ -101,6 +106,7 @@ export function AppShell() {
       </div>
       {/* Global Cmd+K command palette — always mounted, controlled by hook */}
       <CommandPalette open={open} onOpenChange={setOpen} />
+      <OfflineIndicator />
     </div>
   );
 }

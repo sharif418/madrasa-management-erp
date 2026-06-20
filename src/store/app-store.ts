@@ -42,7 +42,9 @@ export type ViewKey =
   | "dailyreport"
   | "fees"
   | "waivers"
-  | "seatplan";
+  | "seatplan"
+  | "ptm"
+  | "quranlog";
 
 type AuthScreen = "landing" | "login" | "signup";
 

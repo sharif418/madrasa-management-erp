@@ -52,6 +52,7 @@ model Tenant {
   walletLogs    WalletLog[]
   // New domain modules
   featureToggles FeatureToggle[]
+  quranLogs      QuranLog[]
   academicLevels AcademicLevel[]
   hostels       Hostel[]
   messMenus     MessMenu[]
@@ -78,6 +79,7 @@ model Tenant {
   bedAllocations BedAllocation[]
   payrolls      Payroll[]
   seatPlans     SeatPlan[]
+  ptmSessions   PtmSession[]
 }
 
 model User {
@@ -207,6 +209,8 @@ model Student {
   healthRecords   HealthRecord[]
   vaccinations    Vaccination[]
   transportAllocations TransportAllocation[]
+  quranLogs            QuranLog[]
+  ptmSessions          PtmSession[]
 
   @@unique([tenantId, rollNo])
 }
@@ -231,6 +235,7 @@ model Teacher {
 
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   payrolls    Payroll[]
+  ptmSessions PtmSession[]
 }
 
 // ============================================================
@@ -1035,4 +1040,52 @@ model SeatPlan {
   class       Class?   @relation(fields: [classId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, examId])
+}
+
+// ============================================================
+// 22. PARENT-TEACHER MEETING (PTM) — scheduler
+// ============================================================
+
+model PtmSession {
+  id          String   @id @default(cuid())
+  tenantId    String
+  studentId   String
+  teacherId   String
+  date        DateTime
+  time        String   // HH:mm (24h)
+  duration    Int      @default(30) // minutes
+  topic       String?
+  notes       String?  // outcome notes added on completion
+  status      String   @default("scheduled") // scheduled, completed, cancelled
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher     Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([tenantId, date])
+}
+
+// ============================================================
+// QURAN READING LOG (KHATM TRACKER) — daily recitation tracking
+// ============================================================
+model QuranLog {
+  id          String   @id @default(cuid())
+  tenantId    String
+  studentId   String
+  date        DateTime
+  pagesRead   Int      @default(0)
+  surahName   String?
+  paraNumber  Int?
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, date])
+  @@index([tenantId, studentId])
 }

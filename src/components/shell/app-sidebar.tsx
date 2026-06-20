@@ -11,6 +11,7 @@ import {
   Bus, HeartPulse, MessageSquare, UserPlus, Package, Send,
   Library, Heart, Calendar, Building2, Sparkles, Bot, CalendarClock, Globe,
   CreditCard, TrendingUp, IdCard, Award, FileText, Receipt, Gift, Armchair,
+  CalendarCheck,
 } from "lucide-react";
 
 type NavItem = { key: ViewKey; icon: typeof Users };
@@ -32,6 +33,7 @@ const groups: NavGroup[] = [
       { key: "academic", icon: BookOpen },
       { key: "timetable", icon: CalendarClock },
       { key: "hifz", icon: BookMarked },
+      { key: "quranlog", icon: BookOpen },
       { key: "muhasaba", icon: Sparkles },
       { key: "attendance", icon: ClipboardList },
       { key: "exams", icon: BookOpen },
@@ -56,6 +58,7 @@ const groups: NavGroup[] = [
       { key: "inventory", icon: Package },
       { key: "feedback", icon: MessageSquare },
       { key: "communications", icon: Send },
+      { key: "ptm", icon: CalendarCheck },
       { key: "alumni", icon: GraduationCap },
       { key: "import", icon: ArrowUpDown },
       { key: "ai", icon: Bot },

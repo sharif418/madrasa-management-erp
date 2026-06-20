@@ -1,0 +1,14 @@
+{
+  "name": "Madrasa Manager",
+  "short_name": "Madrasa",
+  "description": "Complete Madrasa Management ERP",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f766e",
+  "theme_color": "#059669",
+  "icons": [
+    { "src": "/logo.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "lang": "bn",
+  "dir": "ltr"
+}

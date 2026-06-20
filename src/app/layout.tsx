@@ -38,6 +38,7 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Madrasa Manager" }],
   icons: { icon: "/logo.svg" },
+  manifest: "/manifest.json",
   openGraph: {
     title: "Madrasa Manager — Complete Madrasa Management ERP",
     description: "The complete digital platform for modern madrasas.",
@@ -45,11 +46,24 @@ export const metadata: Metadata = {
   },
 };
 
+const SW_REGISTER = `
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js').catch(function () {});
+    });
+  }
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="bn" suppressHydrationWarning>
+      <head>
+        <meta name="theme-color" content="#059669" />
+        <link rel="manifest" href="/manifest.json" />
+        <script dangerouslySetInnerHTML={{ __html: SW_REGISTER }} />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${notoBengali.variable} ${notoArabic.variable} antialiased bg-background text-foreground`}
       >
