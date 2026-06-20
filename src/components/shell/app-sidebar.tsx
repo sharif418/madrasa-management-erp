@@ -10,7 +10,7 @@ import {
   FileBarChart, Moon, X, ArrowUpDown,
   Bus, HeartPulse, MessageSquare, UserPlus, Package, Send,
   Library, Heart, Calendar, Building2, Sparkles, Bot, CalendarClock, Globe,
-  CreditCard, TrendingUp,
+  CreditCard, TrendingUp, IdCard, Award,
 } from "lucide-react";
 
 type NavItem = { key: ViewKey; icon: typeof Users };
@@ -59,6 +59,8 @@ const groups: NavGroup[] = [
       { key: "website", icon: Globe },
       { key: "billing", icon: CreditCard },
       { key: "analytics", icon: TrendingUp },
+      { key: "idcards", icon: IdCard },
+      { key: "certificates", icon: Award },
       { key: "settings", icon: Settings },
       { key: "audit", icon: History },
     ],

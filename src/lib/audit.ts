@@ -4,7 +4,7 @@ import type { SessionUser } from "@/lib/session";
 
 type AuditInput = {
   session: SessionUser | null;
-  action: "create" | "update" | "delete" | "login" | "logout";
+  action: "create" | "update" | "delete" | "login" | "logout" | "export";
   module: string;
   entityId?: string;
   entityName?: string;

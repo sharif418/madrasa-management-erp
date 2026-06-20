@@ -36,6 +36,8 @@ import { WebsiteView } from "@/modules/website/website-view";
 import { BillingView } from "@/modules/billing/billing-view";
 import { CommunicationsView } from "@/modules/communications/communications-view";
 import { AnalyticsView } from "@/modules/analytics/analytics-view";
+import { CertificatesView } from "@/modules/certificates/certificates-view";
+import { IdCardsView } from "@/modules/idcards/idcards-view";
 
 export function AppShell() {
   const { view } = useApp();
@@ -74,6 +76,8 @@ export function AppShell() {
       case "billing": return <BillingView />;
       case "communications": return <CommunicationsView />;
       case "analytics": return <AnalyticsView />;
+      case "idcards": return <IdCardsView />;
+      case "certificates": return <CertificatesView />;
       default: return <DashboardRouter />;
     }
   };
