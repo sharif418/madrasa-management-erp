@@ -44,7 +44,9 @@ export type ViewKey =
   | "waivers"
   | "seatplan"
   | "ptm"
-  | "quranlog";
+  | "quranlog"
+  | "backup"
+  | "customreports";
 
 type AuthScreen = "landing" | "login" | "signup";
 

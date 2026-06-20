@@ -117,6 +117,12 @@ const PtmView = lazy(() => import("@/modules/ptm/ptm-view").then((m) => ({ defau
 const QuranLogView = lazy(() =>
   import("@/modules/quranlog/quranlog-view").then((m) => ({ default: m.QuranLogView })),
 );
+const BackupView = lazy(() =>
+  import("@/modules/backup/backup-view").then((m) => ({ default: m.BackupView })),
+);
+const CustomReportsView = lazy(() =>
+  import("@/modules/custom-reports/custom-reports-view").then((m) => ({ default: m.CustomReportsView })),
+);
 
 export function AppShell() {
   const { view } = useApp();
@@ -163,6 +169,8 @@ export function AppShell() {
       case "seatplan": return <SeatPlanView />;
       case "ptm": return <PtmView />;
       case "quranlog": return <QuranLogView />;
+      case "backup": return <BackupView />;
+      case "customreports": return <CustomReportsView />;
       default: return <DashboardRouter />;
     }
   };
