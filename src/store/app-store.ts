@@ -38,7 +38,8 @@ export type ViewKey =
   | "communications"
   | "analytics"
   | "idcards"
-  | "certificates";
+  | "certificates"
+  | "dailyreport";
 
 type AuthScreen = "landing" | "login" | "signup";
 

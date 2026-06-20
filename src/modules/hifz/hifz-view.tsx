@@ -2,7 +2,7 @@
 // HifzView — top-level shell for the Hifz Tracking module
 // Two tabs: Records (list) and Progress (per-student analytics)
 import * as React from "react";
-import { BookOpen, BarChart3, Plus } from "lucide-react";
+import { BookOpen, BarChart3, Plus, ScrollText } from "lucide-react";
 import { useApp } from "@/store/app-store";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -11,12 +11,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { HifzRecordsTable } from "./hifz-records-table";
 import { HifzProgress } from "./hifz-progress";
 import { HifzForm } from "./hifz-form";
+import { SurahTrackerTab } from "./surah-tracker-tab";
 import type { StudentOption } from "./hifz-types";
 
 export function HifzView() {
   const { t, dir } = useApp();
   const { toast } = useToast();
-  const [tab, setTab] = React.useState<"records" | "progress">("records");
+  const [tab, setTab] = React.useState<"records" | "progress" | "surah">("records");
   const [students, setStudents] = React.useState<StudentOption[]>([]);
   const [studentsLoading, setStudentsLoading] = React.useState(true);
   const [formOpen, setFormOpen] = React.useState(false);
@@ -70,13 +71,16 @@ export function HifzView() {
       </div>
 
       {/* Tabs */}
-      <Tabs value={tab} onValueChange={(v) => setTab(v as "records" | "progress")}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as "records" | "progress" | "surah")}>
         <TabsList>
           <TabsTrigger value="records">
             <BookOpen className="size-4" /> {t("hifz.recordsTab")}
           </TabsTrigger>
           <TabsTrigger value="progress">
             <BarChart3 className="size-4" /> {t("hifz.progressTab")}
+          </TabsTrigger>
+          <TabsTrigger value="surah">
+            <ScrollText className="size-4" /> {t("hifz.surahTracker")}
           </TabsTrigger>
         </TabsList>
 
@@ -107,6 +111,19 @@ export function HifzView() {
             </div>
           ) : (
             <HifzProgress students={students} refreshKey={refreshKey} />
+          )}
+        </TabsContent>
+
+        <TabsContent value="surah" className="mt-4">
+          {studentsLoading ? (
+            <Skeleton className="h-96 rounded-xl" />
+          ) : students.length === 0 ? (
+            <div className="rounded-xl border bg-card p-12 text-center text-muted-foreground">
+              <ScrollText className="size-10 mx-auto mb-3 opacity-40" />
+              <p>{t("hifz.selectStudentFirst")}</p>
+            </div>
+          ) : (
+            <SurahTrackerTab students={students} />
           )}
         </TabsContent>
       </Tabs>

@@ -38,6 +38,7 @@ import { CommunicationsView } from "@/modules/communications/communications-view
 import { AnalyticsView } from "@/modules/analytics/analytics-view";
 import { CertificatesView } from "@/modules/certificates/certificates-view";
 import { IdCardsView } from "@/modules/idcards/idcards-view";
+import { DailyReportView } from "@/modules/daily-report/daily-report-view";
 
 export function AppShell() {
   const { view } = useApp();
@@ -78,6 +79,7 @@ export function AppShell() {
       case "analytics": return <AnalyticsView />;
       case "idcards": return <IdCardsView />;
       case "certificates": return <CertificatesView />;
+      case "dailyreport": return <DailyReportView />;
       default: return <DashboardRouter />;
     }
   };
