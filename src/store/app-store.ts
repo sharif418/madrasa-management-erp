@@ -40,7 +40,9 @@ export type ViewKey =
   | "idcards"
   | "certificates"
   | "dailyreport"
-  | "fees";
+  | "fees"
+  | "waivers"
+  | "seatplan";
 
 type AuthScreen = "landing" | "login" | "signup";
 

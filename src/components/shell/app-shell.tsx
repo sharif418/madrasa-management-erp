@@ -40,6 +40,8 @@ import { CertificatesView } from "@/modules/certificates/certificates-view";
 import { IdCardsView } from "@/modules/idcards/idcards-view";
 import { DailyReportView } from "@/modules/daily-report/daily-report-view";
 import { FeesView } from "@/modules/fees/fees-view";
+import { SeatPlanView } from "@/modules/seatplan/seatplan-view";
+import { WaiversView } from "@/modules/waivers/waivers-view";
 
 export function AppShell() {
   const { view } = useApp();
@@ -82,6 +84,8 @@ export function AppShell() {
       case "certificates": return <CertificatesView />;
       case "dailyreport": return <DailyReportView />;
       case "fees": return <FeesView />;
+      case "waivers": return <WaiversView />;
+      case "seatplan": return <SeatPlanView />;
       default: return <DashboardRouter />;
     }
   };

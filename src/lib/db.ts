@@ -4,7 +4,7 @@ import { PrismaClient } from '@prisma/client'
 // in the dev server's cached global. Without this, the running dev server
 // would keep using the old PrismaClient (pre-schema-change) that lacks the
 // new models, causing `db.<newModel>` to be `undefined`.
-const PRISMA_CACHE_VERSION = 'task25-2025-01'
+const PRISMA_CACHE_VERSION = 'task47-seatplan-2025-01'
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
