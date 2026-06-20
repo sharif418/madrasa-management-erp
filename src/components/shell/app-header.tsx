@@ -1,9 +1,10 @@
-// App header — mobile menu button, page title, language switcher, logout
+// App header — mobile menu button, page title, prayer widget, language switcher, logout
 "use client";
 import { useApp } from "@/store/app-store";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { NotificationBell } from "@/components/shell/notification-bell";
+import { PrayerTimeWidget } from "@/components/shell/prayer-time-widget";
 import { Menu, LogOut, Moon, Search } from "lucide-react";
 import { toast } from "sonner";
 
@@ -47,6 +48,7 @@ export function AppHeader({
               })}
             </p>
           </div>
+          <PrayerTimeWidget />
         </div>
 
         <div className="flex items-center gap-1">

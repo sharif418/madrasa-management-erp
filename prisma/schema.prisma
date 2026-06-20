@@ -29,6 +29,8 @@ model Tenant {
   theme       String   @default("emerald")
   plan        String   @default("trial") // trial, basic, pro, enterprise
   status      String   @default("active") // active, suspended, cancelled
+  latitude    Float?
+  longitude   Float?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -59,6 +61,7 @@ model Tenant {
   gatePasses    GatePass[]
   visitors      Visitor[]
   muhasabaRecords MuhasabaRecord[]
+  tajweedAssessments TajweedAssessment[]
   timetableSlots TimetableSlot[]
   books         Book[]
   bookLendings  BookLending[]
@@ -207,6 +210,7 @@ model Student {
   bedAllocations  BedAllocation[]
   gatePasses      GatePass[]
   muhasabaRecords MuhasabaRecord[]
+  tajweedAssessments TajweedAssessment[]
   bookLendings    BookLending[]
   healthRecords   HealthRecord[]
   vaccinations    Vaccination[]
@@ -269,24 +273,55 @@ model Payroll {
 // ============================================================
 
 model HifzRecord {
-  id            String   @id @default(cuid())
-  tenantId      String
-  studentId     String
-  teacherId     String?
-  type          String   // sabak, sabaq_para, dhor
-  paraNumber    Int
-  surahName     String?
-  ayahFrom      Int?
-  ayahTo        Int?
-  qualityRating Int?     // 1-5
-  mistakesCount Int      @default(0)
-  notes         String?
-  status        String   @default("completed") // completed, revision, weak
-  recordedAt    DateTime @default(now())
+  id                String   @id @default(cuid())
+  tenantId          String
+  studentId         String
+  teacherId         String?
+  type              String   // sabak, sabaq_para, dhor
+  paraNumber        Int
+  surahName         String?
+  ayahFrom          Int?
+  ayahTo            Int?
+  qualityRating     Int?     // 1-5
+  mistakesCount     Int      @default(0)
+  notes             String?
+  status            String   @default("completed") // completed, revision, weak
+  recordedAt        DateTime @default(now())
+  // Spaced-repetition fields (auto-computed on create)
+  nextRevisionDate  DateTime?
+  revisionCount     Int      @default(0)
+  strengthScore     Int      @default(3) // 1-5, how well memorized
 
   tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   student       Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   teacher       User?    @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+}
+
+// ============================================================
+// 3b. TAJWEED ASSESSMENT — structured rubric evaluation of recitation
+// ============================================================
+model TajweedAssessment {
+  id                String   @id @default(cuid())
+  tenantId          String
+  studentId         String
+  teacherId         String?
+  date              DateTime @default(now())
+  surahName         String
+  ayahFrom          Int
+  ayahTo            Int
+  maddScore         Int      // 1-10 (vowel prolongation)
+  waqfScore         Int      // 1-10 (stopping rules)
+  tizkeerScore      Int      // 1-10 (specific rule areas)
+  nunScore          Int      // 1-10 (noon sakin + tanween rules)
+  makhrajScore      Int      // 1-10 (articulation points)
+  totalScore        Int      // 0-100 (computed)
+  grade             String   // EXCELLENT, GOOD, SATISFACTORY, NEEDS_IMPROVEMENT
+  comments          String?
+  improvementAreas  String?  // JSON array of rule names needing work
+  createdAt         DateTime @default(now())
+
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student           Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }
 
 // ============================================================

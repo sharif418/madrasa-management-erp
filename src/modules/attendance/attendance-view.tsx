@@ -1,8 +1,8 @@
 "use client";
 // AttendanceView — top-level shell for the Attendance module
-// Date picker + person type tabs (students/teachers) + class filter + marker + stats
+// Date picker + person type tabs (students/teachers) + QR Scan + class filter + marker + stats
 import * as React from "react";
-import { CalendarCheck, GraduationCap, Users } from "lucide-react";
+import { CalendarCheck, GraduationCap, Users, QrCode } from "lucide-react";
 import { useApp } from "@/store/app-store";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,9 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { AttendanceMarker } from "./attendance-marker";
 import { AttendanceStats } from "./attendance-stats";
+import { QrScanner } from "./qr-scanner";
+
+type TabKey = "student" | "teacher" | "qr";
 
 type ClassOption = { id: string; name: string };
 
@@ -27,7 +30,7 @@ export function AttendanceView() {
   const { t, dir, locale } = useApp();
   const today = React.useMemo(() => new Date(), []);
   const [dateStr, setDateStr] = React.useState(toDateInputValue(today));
-  const [personType, setPersonType] = React.useState<"student" | "teacher">("student");
+  const [tab, setTab] = React.useState<TabKey>("student");
   const [classId, setClassId] = React.useState<string>("all");
   const [classes, setClasses] = React.useState<ClassOption[]>([]);
   const [refreshKey, setRefreshKey] = React.useState(0);
@@ -100,7 +103,7 @@ export function AttendanceView() {
             <Select
               value={classId}
               onValueChange={setClassId}
-              disabled={personType !== "student"}
+              disabled={tab !== "student"}
             >
               <SelectTrigger className="w-full">
                 <SelectValue />
@@ -127,13 +130,16 @@ export function AttendanceView() {
       </Card>
 
       {/* Person type tabs + marker */}
-      <Tabs value={personType} onValueChange={(v) => setPersonType(v as "student" | "teacher")}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
         <TabsList>
           <TabsTrigger value="student">
             <GraduationCap className="size-4" /> {t("attendance.students")}
           </TabsTrigger>
           <TabsTrigger value="teacher">
             <Users className="size-4" /> {t("attendance.teachers")}
+          </TabsTrigger>
+          <TabsTrigger value="qr">
+            <QrCode className="size-4" /> {t("attendance.qrScan")}
           </TabsTrigger>
         </TabsList>
         <TabsContent value="student" className="mt-4">
@@ -153,6 +159,9 @@ export function AttendanceView() {
             onSaved={bumpStats}
             key={`teacher-${dateStr}`}
           />
+        </TabsContent>
+        <TabsContent value="qr" className="mt-4">
+          <QrScanner />
         </TabsContent>
       </Tabs>
 

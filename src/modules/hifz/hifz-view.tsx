@@ -2,7 +2,7 @@
 // HifzView — top-level shell for the Hifz Tracking module
 // Two tabs: Records (list) and Progress (per-student analytics)
 import * as React from "react";
-import { BookOpen, BarChart3, Plus, ScrollText } from "lucide-react";
+import { BookOpen, BarChart3, Plus, ScrollText, Sparkles } from "lucide-react";
 import { useApp } from "@/store/app-store";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -12,12 +12,13 @@ import { HifzRecordsTable } from "./hifz-records-table";
 import { HifzProgress } from "./hifz-progress";
 import { HifzForm } from "./hifz-form";
 import { SurahTrackerTab } from "./surah-tracker-tab";
+import { TajweedTab } from "./tajweed-tab";
 import type { StudentOption } from "./hifz-types";
 
 export function HifzView() {
   const { t, dir } = useApp();
   const { toast } = useToast();
-  const [tab, setTab] = React.useState<"records" | "progress" | "surah">("records");
+  const [tab, setTab] = React.useState<"records" | "progress" | "surah" | "tajweed">("records");
   const [students, setStudents] = React.useState<StudentOption[]>([]);
   const [studentsLoading, setStudentsLoading] = React.useState(true);
   const [formOpen, setFormOpen] = React.useState(false);
@@ -82,6 +83,9 @@ export function HifzView() {
           <TabsTrigger value="surah">
             <ScrollText className="size-4" /> {t("hifz.surahTracker")}
           </TabsTrigger>
+          <TabsTrigger value="tajweed">
+            <Sparkles className="size-4" /> {t("hifz.tajweed")}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="records" className="mt-4">
@@ -124,6 +128,19 @@ export function HifzView() {
             </div>
           ) : (
             <SurahTrackerTab students={students} />
+          )}
+        </TabsContent>
+
+        <TabsContent value="tajweed" className="mt-4">
+          {studentsLoading ? (
+            <Skeleton className="h-96 rounded-xl" />
+          ) : students.length === 0 ? (
+            <div className="rounded-xl border bg-card p-12 text-center text-muted-foreground">
+              <Sparkles className="size-10 mx-auto mb-3 opacity-40" />
+              <p>{t("hifz.tajweedEmpty")}</p>
+            </div>
+          ) : (
+            <TajweedTab students={students} refreshKey={refreshKey} />
           )}
         </TabsContent>
       </Tabs>

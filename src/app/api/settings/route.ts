@@ -33,7 +33,7 @@ export const GET = withSession(async ({ session }) => {
       id: true, name: true, subdomain: true, logoUrl: true,
       phone: true, email: true, address: true,
       currency: true, language: true, theme: true,
-      plan: true, status: true,
+      plan: true, status: true, latitude: true, longitude: true,
     },
   });
   if (!tenant) return fail("Tenant not found", 404);
@@ -49,6 +49,8 @@ type UpdateBody = {
   language?: string;
   theme?: string;
   logoUrl?: string;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
 };
 
 // PUT /api/settings — update tenant info (cannot touch plan or status)
@@ -68,6 +70,14 @@ export const PUT = withSession(async ({ session, req }) => {
   if (body.currency !== undefined && CURRENCIES.has(body.currency)) data.currency = body.currency;
   if (body.language !== undefined && LANGUAGES.has(body.language)) data.language = body.language;
   if (body.theme !== undefined && isValidTheme(body.theme)) data.theme = body.theme;
+  if (body.latitude !== undefined) {
+    const lat = typeof body.latitude === "string" ? parseFloat(body.latitude) : body.latitude;
+    data.latitude = lat == null || isNaN(lat) ? null : Math.max(-90, Math.min(90, lat));
+  }
+  if (body.longitude !== undefined) {
+    const lng = typeof body.longitude === "string" ? parseFloat(body.longitude) : body.longitude;
+    data.longitude = lng == null || isNaN(lng) ? null : Math.max(-180, Math.min(180, lng));
+  }
 
   if (Object.keys(data).length === 0) return fail("No valid fields to update");
 
@@ -78,7 +88,7 @@ export const PUT = withSession(async ({ session, req }) => {
       id: true, name: true, subdomain: true, logoUrl: true,
       phone: true, email: true, address: true,
       currency: true, language: true, theme: true,
-      plan: true, status: true,
+      plan: true, status: true, latitude: true, longitude: true,
     },
   });
 

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { ok, fail, withSession, auditAfter, forbidden } from "@/lib/api";
 import { checkPermission } from "@/lib/permissions";
 import { cacheInvalidate } from "@/lib/cache";
+import { computeNextRevision, strengthFromQuality } from "@/lib/spaced-repetition";
 
 // Allowed types & statuses (kept in original Islamic form across all languages)
 const TYPES = new Set(["sabak", "sabaq_para", "dhor"]);
@@ -112,6 +113,13 @@ export const POST = withSession(async ({ session, req }) => {
       mistakesCount: mistakesCount != null && mistakesCount !== "" ? Number(mistakesCount) : 0,
       notes: notes ? String(notes).trim() : null,
       status: status || "completed",
+      // Spaced-repetition scheduling
+      strengthScore: strengthFromQuality(qualityRating != null && qualityRating !== "" ? Number(qualityRating) : null),
+      revisionCount: 1,
+      nextRevisionDate: computeNextRevision(
+        strengthFromQuality(qualityRating != null && qualityRating !== "" ? Number(qualityRating) : null),
+        1
+      ),
     },
     include: { student: { select: { name: true } } },
   });

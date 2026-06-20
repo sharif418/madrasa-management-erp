@@ -3,7 +3,8 @@
 // A4 landscape, 2 cards per page. Uses pdf-lib directly (custom card layout).
 // Latin-only (StandardFonts). Tenant-scoped. Requires students:export or teachers:export.
 import { NextResponse } from "next/server";
-import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, PDFFont, PDFImage, PDFPage, StandardFonts, rgb } from "pdf-lib";
+import QRCode from "qrcode";
 import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
 import { unauthorized, fail, forbidden, auditAfter } from "@/lib/api";
@@ -106,11 +107,17 @@ async function buildPdf(tenant: Tenant, people: (Student | Teacher)[], type: "st
   const validUntil = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
   const fmt = (d: Date) => d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
   const issuedStr = fmt(now), validStr = fmt(validUntil);
+  // Pre-generate QR codes for every person (encoded student/staff id for attendance).
+  const qrBuffers = await Promise.all(people.map((p) =>
+    QRCode.toBuffer(p.id, { width: 120, margin: 1, color: { dark: "#064e3b", light: "#ffffff" } })
+      .catch(() => null as Uint8Array | null)
+  ));
+  const qrImages = await Promise.all(qrBuffers.map((b) => (b ? doc.embedPng(b) : Promise.resolve(null))));
   for (let i = 0; i < people.length; i += 2) {
     const page = doc.addPage([PAGE_W, PAGE_H]);
     page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: C.pageBg });
     people.slice(i, i + 2).forEach((p, idx) => {
-      drawCard(page, MARGIN + idx * (CARD_W + MARGIN), MARGIN, CARD_W, CARD_H, p, type, tenant, font, bold, issuedStr, validStr);
+      drawCard(page, MARGIN + idx * (CARD_W + MARGIN), MARGIN, CARD_W, CARD_H, p, type, tenant, font, bold, issuedStr, validStr, qrImages[i + idx]);
     });
   }
   return doc.save();
@@ -118,7 +125,8 @@ async function buildPdf(tenant: Tenant, people: (Student | Teacher)[], type: "st
 
 function drawCard(page: PDFPage, x: number, y: number, w: number, h: number,
   person: Student | Teacher, type: "student" | "teacher",
-  tenant: Tenant, font: PDFFont, bold: PDFFont, issuedStr: string, validStr: string) {
+  tenant: Tenant, font: PDFFont, bold: PDFFont, issuedStr: string, validStr: string,
+  qrImage: PDFImage | null) {
   page.drawRectangle({ x, y, width: w, height: h, color: C.cardBg, borderColor: C.border, borderWidth: 0.75 });
   drawStarStrip(page, x, y + h - 8, w, 8);
   drawStarStrip(page, x, y, w, 8);
@@ -187,4 +195,15 @@ function drawCard(page: PDFPage, x: number, y: number, w: number, h: number,
   const contactParts = [tenant.address, tenant.phone].filter(Boolean).map(String);
   if (contactParts.length)
     page.drawText(truncText(contactParts.join("  |  "), w - 48, font, 7), { x: ix, y: headerY - 12, size: 7, font, color: C.muted });
+
+  // QR code (bottom-right corner) — embed scan payload for attendance
+  if (qrImage) {
+    const qrSize = 56;
+    const qrX = x + w - 6 - qrSize - 8;
+    const labelY = stripY + stripH + 4; // just above the validity strip
+    const qrY = labelY + 12;
+    page.drawRectangle({ x: qrX - 3, y: qrY - 3, width: qrSize + 6, height: qrSize + 6, color: C.white, borderColor: C.emerald, borderWidth: 0.5 });
+    page.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize });
+    page.drawText("Scan for attendance", { x: qrX - 3, y: labelY, size: 6.5, font, color: C.muted });
+  }
 }

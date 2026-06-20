@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, TrendingUp, Sparkles, Star, Users } from "lucide-react";
+import { Loader2, TrendingUp, Sparkles, Star, Users, Flame } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, LineChart, Line, CartesianGrid,
@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useApp } from "@/store/app-store";
 
 import { fmtDateShort, type MuhasabaStats } from "./types";
+import { StreakSection } from "./streak-section";
 
 export function MuhasabaAnalyticsTab() {
   const { t, dir } = useApp();
@@ -180,6 +181,15 @@ export function MuhasabaAnalyticsTab() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Streaks & Badges */}
+      <div className="rounded-xl border bg-card p-4 shadow-sm">
+        <div className="flex items-center gap-2 mb-3">
+          <Flame className="size-4 text-orange-500" />
+          <p className="text-sm font-semibold">{t("muhasaba.streaks")}</p>
+        </div>
+        <StreakSection />
       </div>
     </div>
   );

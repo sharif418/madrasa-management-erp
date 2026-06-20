@@ -10,7 +10,7 @@ import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from "@/components/ui/select";
 import {
-  Building2, Save, Hash, Phone, Mail, MapPin, Coins, Globe,
+  Building2, Save, Hash, Phone, Mail, MapPin, Coins, Globe, Compass,
   type LucideIcon,
 } from "lucide-react";
 import { useApp } from "@/store/app-store";
@@ -27,6 +27,8 @@ export type TenantInfo = {
   theme: string;
   plan: string;
   status: string;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 function FieldLabel({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
@@ -54,6 +56,8 @@ export function SettingsInfoTab({
     address: "",
     currency: "BDT",
     language: "bn",
+    latitude: "",
+    longitude: "",
   });
   const [saving, setSaving] = React.useState(false);
 
@@ -67,6 +71,8 @@ export function SettingsInfoTab({
       address: info.address ?? "",
       currency: info.currency ?? "BDT",
       language: info.language ?? "bn",
+      latitude: info.latitude != null ? String(info.latitude) : "",
+      longitude: info.longitude != null ? String(info.longitude) : "",
     });
   }, [info]);
 
@@ -195,6 +201,39 @@ export function SettingsInfoTab({
               </SelectContent>
             </Select>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Geolocation — used for prayer time calculations */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Compass className="size-4 text-emerald-600" />
+            {t("settings.location")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <FieldLabel icon={Compass}>{t("settings.latitude")}</FieldLabel>
+            <Input
+              inputMode="decimal"
+              value={form.latitude}
+              onChange={(e) => setForm((f) => ({ ...f, latitude: e.target.value }))}
+              placeholder="23.8103"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <FieldLabel icon={Compass}>{t("settings.longitude")}</FieldLabel>
+            <Input
+              inputMode="decimal"
+              value={form.longitude}
+              onChange={(e) => setForm((f) => ({ ...f, longitude: e.target.value }))}
+              placeholder="90.4125"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground sm:col-span-2">
+            {t("settings.locationDesc")}
+          </p>
         </CardContent>
       </Card>
 

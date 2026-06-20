@@ -1,6 +1,5 @@
 "use client";
-// HifzProgress — per-student memorization progress view
-// Shows: overall bar, circular progress (X/30), 30-cell para grid, stats, quality trend
+// HifzProgress — per-student progress: overall bar, circular (X/30), 30-cell para grid, stats, quality trend + Today's Revision card.
 import * as React from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { BookOpenCheck, TrendingUp, Award, Activity, Sparkles } from "lucide-react";
@@ -13,6 +12,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Tooltip as UITooltip, TooltipTrigger as UITooltipTrigger, TooltipContent as UITooltipContent } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { HIFZ_TYPES, type ProgressResponse, type StudentOption, typeAccent, typeLabelKey, paraCellClass } from "./hifz-types";
+import { RevisionTodayCard } from "./revision-today-card";
 
 type Props = {
   students: StudentOption[];
@@ -58,6 +58,9 @@ export function HifzProgress({ students, refreshKey }: Props) {
 
   return (
     <div className="space-y-4" dir={dir()}>
+      {/* Today's Revision — at the top */}
+      <RevisionTodayCard refreshKey={refreshKey} />
+
       {/* Student selector */}
       <Card className="py-4">
         <CardContent className="flex flex-col sm:flex-row sm:items-end gap-3">
@@ -288,11 +291,9 @@ function LegendDot({ color, label }: { color: string; label: string }) {
 
 function EmptyState({ label }: { label: string }) {
   return (
-    <Card className="py-12">
-      <CardContent className="text-center text-muted-foreground">
-        <BookOpenCheck className="mx-auto mb-3 size-10 opacity-40" />
-        <p>{label}</p>
-      </CardContent>
-    </Card>
+    <Card className="py-12"><CardContent className="text-center text-muted-foreground">
+      <BookOpenCheck className="mx-auto mb-3 size-10 opacity-40" />
+      <p>{label}</p>
+    </CardContent></Card>
   );
 }
