@@ -123,6 +123,21 @@ const BackupView = lazy(() =>
 const CustomReportsView = lazy(() =>
   import("@/modules/custom-reports/custom-reports-view").then((m) => ({ default: m.CustomReportsView })),
 );
+const ZakatView = lazy(() =>
+  import("@/modules/zakat/zakat-view").then((m) => ({ default: m.ZakatView })),
+);
+const InfirmaryView = lazy(() =>
+  import("@/modules/infirmary/infirmary-view").then((m) => ({ default: m.InfirmaryView })),
+);
+const SecurityView = lazy(() =>
+  import("@/modules/security/security-view").then((m) => ({ default: m.SecurityView })),
+);
+const MessView = lazy(() =>
+  import("@/modules/mess/mess-view").then((m) => ({ default: m.MessView })),
+);
+const ActivityView = lazy(() =>
+  import("@/modules/activity/activity-view").then((m) => ({ default: m.ActivityView })),
+);
 
 export function AppShell() {
   const { view } = useApp();
@@ -171,6 +186,11 @@ export function AppShell() {
       case "quranlog": return <QuranLogView />;
       case "backup": return <BackupView />;
       case "customreports": return <CustomReportsView />;
+      case "zakat": return <ZakatView />;
+      case "infirmary": return <InfirmaryView />;
+      case "security": return <SecurityView />;
+      case "mess": return <MessView />;
+      case "activity": return <ActivityView />;
       default: return <DashboardRouter />;
     }
   };

@@ -5,12 +5,17 @@ import { ok, fail, withSession, auditAfter, forbidden } from "@/lib/api";
 import { checkPermission } from "@/lib/permissions";
 import { cacheInvalidate } from "@/lib/cache";
 
+import { getUserScope, getTransactionFilter } from "@/lib/scope";
+
 const VALID_TYPES = ["income", "expense", "transfer"] as const;
 const VALID_METHODS = ["cash", "bkash", "nagad", "bank", "wallet"] as const;
 type TxType = (typeof VALID_TYPES)[number];
 
 // ----------------------------- GET (list) -----------------------------
 export const GET = withSession(async ({ session, req }) => {
+  const scope = await getUserScope();
+  if (!scope) return unauthorized();
+
   const url = new URL(req.url);
   const fundId = url.searchParams.get("fundId") || "";
   const type = url.searchParams.get("type") || "";
@@ -19,7 +24,10 @@ export const GET = withSession(async ({ session, req }) => {
   const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
   const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") || "20", 10)));
 
-  const where: Record<string, unknown> = { tenantId: session.tenantId };
+  const where: Record<string, any> = { 
+    tenantId: session.tenantId,
+    ...getTransactionFilter(scope)
+  };
   if (fundId) where.fundId = fundId;
   if (VALID_TYPES.includes(type as TxType)) where.type = type;
 

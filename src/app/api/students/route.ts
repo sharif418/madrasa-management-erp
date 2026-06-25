@@ -1,12 +1,17 @@
 // Students API — list (with filters + pagination) & create (with auto Wallet)
 // All queries scoped by tenantId from session.
 import { db } from "@/lib/db";
-import { ok, fail, withSession, auditAfter, forbidden } from "@/lib/api";
+import { ok, fail, withSession, auditAfter, forbidden, unauthorized } from "@/lib/api";
 import { checkPermission } from "@/lib/permissions";
 import { cacheInvalidate } from "@/lib/cache";
 
+import { getUserScope, getStudentFilter } from "@/lib/scope";
+
 // GET /api/students?search=&classId=&gender=&page=1&limit=20
 export const GET = withSession(async ({ session, req }) => {
+  const scope = await getUserScope();
+  if (!scope) return unauthorized();
+
   const url = new URL(req.url);
   const search = url.searchParams.get("search")?.trim() || "";
   const classId = url.searchParams.get("classId") || "";
@@ -15,7 +20,10 @@ export const GET = withSession(async ({ session, req }) => {
   const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") || "20", 10)));
 
   // Build tenant-scoped where clause
-  const where: Record<string, unknown> = { tenantId: session.tenantId };
+  const where: Record<string, any> = { 
+    tenantId: session.tenantId,
+    ...getStudentFilter(scope)
+  };
   if (classId) where.classId = classId;
   if (gender === "male" || gender === "female") where.gender = gender;
 

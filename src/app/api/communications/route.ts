@@ -143,13 +143,80 @@ export const POST = withSession(async ({ session, req }) => {
     },
   });
 
+  let delivered = 0;
+  let failed = 0;
+  let sandbox = true;
+
+  if (channel === "sms" || channel === "whatsapp") {
+    const recipients: { phone: string; name: string }[] = [];
+
+    if (audience === "parents" || audience === "all") {
+      const students = await db.student.findMany({
+        where: { tenantId: session.tenantId, isActive: true, NOT: { guardianPhone: null } },
+        select: { guardianPhone: true, guardianName: true },
+      });
+      const uniqueParents = new Map<string, string>();
+      for (const s of students) {
+        if (s.guardianPhone) {
+          uniqueParents.set(s.guardianPhone, s.guardianName || "Parent");
+        }
+      }
+      for (const [phone, name] of uniqueParents.entries()) {
+        recipients.push({ phone, name });
+      }
+    }
+
+    if (audience === "staff" || audience === "all") {
+      const staff = await db.teacher.findMany({
+        where: { tenantId: session.tenantId, isActive: true, NOT: { phone: null } },
+        select: { phone: true, name: true },
+      });
+      for (const s of staff) {
+        if (s.phone) {
+          recipients.push({ phone: s.phone, name: s.name });
+        }
+      }
+    }
+
+    if (audience === "students") {
+      const students = await db.student.findMany({
+        where: { tenantId: session.tenantId, isActive: true, NOT: { phone: null } },
+        select: { phone: true, name: true },
+      });
+      for (const s of students) {
+        if (s.phone) {
+          recipients.push({ phone: s.phone, name: s.name });
+        }
+      }
+    }
+
+    const { sendMessage } = await import("@/lib/notification-gateway");
+    const results = await Promise.allSettled(
+      recipients.map((r) =>
+        sendMessage({
+          to: r.phone,
+          message: `${title}\n\n${message}`,
+          channel: channel === "sms" ? "SMS" : "WHATSAPP",
+          tenantId: session.tenantId,
+        })
+      )
+    );
+
+    delivered = results.filter((r) => r.status === "fulfilled" && r.value.success).length;
+    failed = results.filter((r) => r.status === "rejected" || (r.status === "fulfilled" && !r.value.success)).length;
+    sandbox = results[0]?.status === "fulfilled" ? (results[0].value as any).sandbox : true;
+  } else {
+    // app or email channel — mock success
+    delivered = recipientCount;
+  }
+
   await auditAfter(session, {
     action: "create",
     module: "communications",
     entityId: created.id,
     entityName: title,
-    details: { channel, audience, recipientCount, source: "communication-center" },
+    details: { channel, audience, recipientCount, source: "communication-center", delivered, failed, sandbox },
   });
 
-  return ok({ sent: recipientCount, channel, id: created.id }, 201);
+  return ok({ sent: recipientCount, delivered, failed, sandbox, channel, id: created.id }, 201);
 });

@@ -2122,6 +2122,11 @@ export const translations: Record<Locale, Dict> = {
     "customreports.hifzDesc": "Quran memorization tracking logs",
     "customreports.attendanceDesc": "Daily attendance records",
     "customreports.feesDesc": "Fee collection and payment history",
+    "nav.zakat": "Zakat Tamlik",
+    "nav.infirmary": "Infirmary",
+    "nav.security": "Security",
+    "nav.mess": "Mess Management",
+    "nav.activity": "Activity Log",
   },
 
   bn: {
@@ -4222,6 +4227,11 @@ export const translations: Record<Locale, Dict> = {
     "customreports.hifzDesc": "কুরআন মুখস্থ ট্র্যাকিং লগ",
     "customreports.attendanceDesc": "দৈনিক হাজিরা রেকর্ড",
     "customreports.feesDesc": "ফি সংগ্রহ ও পেমেন্ট ইতিহাস",
+    "nav.zakat": "যাকাত তমলিক",
+    "nav.infirmary": "ইনফার্মারি",
+    "nav.security": "নিরাপত্তা",
+    "nav.mess": "মেস ব্যবস্থাপনা",
+    "nav.activity": "অ্যাক্টিভিটি লগ",
   },
 
   ar: {
@@ -6322,6 +6332,11 @@ export const translations: Record<Locale, Dict> = {
     "customreports.hifzDesc": "سجلات متابعة حفظ القرآن",
     "customreports.attendanceDesc": "سجلات الحضور اليومي",
     "customreports.feesDesc": "تاريخ تحصيل الرسوم والدفعات",
+    "nav.zakat": "زكاة التمليك",
+    "nav.infirmary": "العيادة",
+    "nav.security": "الأمن",
+    "nav.mess": "إدارة المطعم",
+    "nav.activity": "سجل النشاط",
   },
 };
 

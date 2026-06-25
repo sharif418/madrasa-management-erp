@@ -1,8 +1,10 @@
 // Student by id — GET (with relations), PUT (update), DELETE
 // All scoped by tenantId from session.
 import { db } from "@/lib/db";
-import { ok, fail, notFound, withSession, auditAfter, forbidden } from "@/lib/api";
+import { ok, fail, notFound, withSession, auditAfter, forbidden, unauthorized } from "@/lib/api";
 import { checkPermission } from "@/lib/permissions";
+
+import { getUserScope, canAccessStudent } from "@/lib/scope";
 
 // Helper: fetch one tenant-scoped student
 async function getStudent(id: string, tenantId: string) {
@@ -16,6 +18,13 @@ async function getStudent(id: string, tenantId: string) {
 export const GET = withSession(async ({ session, params }) => {
   const id = params?.id;
   if (!id) return fail("Missing student id");
+
+  const scope = await getUserScope();
+  if (!scope) return unauthorized();
+  if (!(await canAccessStudent(scope, id))) {
+    return forbidden("You don't have permission to access this student's data");
+  }
+
   const student = await getStudent(id, session.tenantId);
   if (!student) return notFound("Student not found");
 

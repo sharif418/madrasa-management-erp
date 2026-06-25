@@ -6,12 +6,17 @@ import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { ok, fail, unauthorized, auditAfter } from "@/lib/api";
 
+import { getUserScope, getStudentFilter, canAccessStudent } from "@/lib/scope";
+
 const SALAH_STATUSES = ["jamaat", "alone", "qadha", "pending"] as const;
 type SalahStatus = (typeof SALAH_STATUSES)[number];
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session) return unauthorized();
+
+  const scope = await getUserScope();
+  if (!scope) return unauthorized();
 
   const url = req.nextUrl;
   const studentId = url.searchParams.get("studentId") || "";
@@ -20,8 +25,16 @@ export async function GET(req: NextRequest) {
   const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10) || 1);
   const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") || "30", 10) || 30));
 
-  const where: Record<string, unknown> = { tenantId: session.tenantId };
-  if (studentId) where.studentId = studentId;
+  const where: Record<string, any> = { 
+    tenantId: session.tenantId,
+    student: getStudentFilter(scope)
+  };
+  if (studentId) {
+    if (!(await canAccessStudent(scope, studentId))) {
+      return forbidden("You don't have permission to access this student's tarbiyah logs");
+    }
+    where.studentId = studentId;
+  }
   if (from || to) {
     const dateRange: Record<string, Date> = {};
     if (from) dateRange.gte = new Date(from);
@@ -73,10 +86,17 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return unauthorized();
 
+  const scope = await getUserScope();
+  if (!scope) return unauthorized();
+
   const body = (await req.json().catch(() => ({}))) as CreateInput;
   const studentId = (body.studentId || "").trim();
   if (!studentId) return fail("Student ID required");
   if (!body.date) return fail("Date required");
+
+  if (!(await canAccessStudent(scope, studentId))) {
+    return forbidden("You don't have permission to record tarbiyah logs for this student");
+  }
 
   const student = await db.student.findFirst({
     where: { id: studentId, tenantId: session.tenantId },

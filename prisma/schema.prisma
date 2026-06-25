@@ -8,7 +8,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -88,6 +88,41 @@ model Tenant {
   messageTemplates MessageTemplate[]
   studentDocuments StudentDocument[]
   staffLeaves   StaffLeave[]
+  campuses      Campus[]
+  // Merged from 5.1 + new models
+  zakatDistributions  ZakatDistribution[]
+  infirmaryRecords    InfirmaryRecord[]
+  activityLogs        ActivityLog[]
+  systemAlerts        SystemAlert[]
+  integrationConfigs  IntegrationConfig[]
+  // Website CMS (full, from 5.1)
+  websiteSetting      WebsiteSetting?
+  websitePrograms     WebsiteProgram[]
+  websiteFaculty      WebsiteFaculty[]
+  websiteAlbums       WebsiteAlbum[]
+  websiteTestimonials WebsiteTestimonial[]
+  websiteFaqs         WebsiteFAQ[]
+  websiteIslamic      WebsiteIslamicResource[]
+  websiteVideos       WebsiteVideo[]
+  websiteBlogPosts    WebsiteBlogPost[]
+  websiteFacilities   WebsiteFacility[]
+  websiteFounders     WebsiteFounder[]
+}
+
+model Campus {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String
+  address   String?
+  phone     String?
+  isMain    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  students  Student[]
+  teachers  Teacher[]
+  hostels   Hostel[]
+  classes   Class[]
 }
 
 model User {
@@ -108,6 +143,7 @@ model User {
   hifzRecords HifzRecord[]
   markedAttendance Attendance[]
   auditLogs   AuditLog[] @relation("AuditActor")
+  permissionOverrides UserPermissionOverride[]
 
   @@unique([tenantId, phone])
 }
@@ -123,6 +159,7 @@ model Role {
 
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   users       UserRole[]
+  rolePermissions RolePermission[]
 
   @@unique([tenantId, name])
 }
@@ -150,10 +187,12 @@ model Class {
   capacity   Int      @default(40)
   teacherId  String?
   academicLevelId String?
+  campusId   String?
   createdAt  DateTime @default(now())
 
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   academicLevel AcademicLevel? @relation(fields: [academicLevelId], references: [id], onDelete: SetNull)
+  campus      Campus?  @relation(fields: [campusId], references: [id], onDelete: SetNull)
   students    Student[]
   subjects    Subject[]
   exams       Exam[]
@@ -194,6 +233,7 @@ model Student {
   bloodGroup      String?
   photoUrl        String?
   classId         String?
+  campusId        String?
   isHafiz         Boolean  @default(false)
   isZakatEligible Boolean  @default(false)
   isActive        Boolean  @default(true)
@@ -203,6 +243,7 @@ model Student {
 
   tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   class           Class?   @relation(fields: [classId], references: [id], onDelete: SetNull)
+  campus          Campus?  @relation(fields: [campusId], references: [id], onDelete: SetNull)
   hifzRecords     HifzRecord[]
   wallet          Wallet?
   feeCollections  FeeCollection[]
@@ -221,6 +262,8 @@ model Student {
   quranLogs            QuranLog[]
   ptmSessions          PtmSession[]
   studentDocuments     StudentDocument[]
+  zakatDistributions   ZakatDistribution[]
+  infirmaryRecords     InfirmaryRecord[]
 
   @@unique([tenantId, rollNo])
 }
@@ -240,10 +283,12 @@ model Teacher {
   isActive    Boolean  @default(true)
   address     String?
   photoUrl    String?
+  campusId    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campus      Campus?  @relation(fields: [campusId], references: [id], onDelete: SetNull)
   payrolls    Payroll[]
   ptmSessions PtmSession[]
   staffLeaves StaffLeave[]
@@ -595,9 +640,11 @@ model Hostel {
   tenantId    String
   name        String
   wardenTeacherId String?
+  campusId    String?
   createdAt   DateTime @default(now())
 
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campus      Campus?  @relation(fields: [campusId], references: [id], onDelete: SetNull)
   blocks      HostelBlock[]
 }
 
@@ -1212,11 +1259,11 @@ model StudentDocument {
   tenantId    String
   studentId   String
   title       String
-  type        String   @default("other") // birth_certificate, transfer_certificate, medical, photo, other
+  type        String   @default("other")
   fileName    String
   fileSize    Int
   mimeType    String
-  data        String   // base64 encoded file data (stored as text for SQLite simplicity)
+  data        Bytes    // binary file data (PostgreSQL bytea)
   uploadedAt  DateTime @default(now())
 
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -1224,3 +1271,370 @@ model StudentDocument {
 
   @@index([tenantId, studentId, type])
 }
+
+// ============================================================
+// RBAC ENHANCEMENT — Granular Permission Matrix (from 5.1)
+// ============================================================
+
+model RolePermission {
+  id        String   @id @default(cuid())
+  roleId    String
+  module    String   // dashboard, students, finance, hifz, etc.
+  action    String   // view, create, update, delete, export, override
+  scope     String   @default("all") // all, own_class, own_dept, own_child
+  createdAt DateTime @default(now())
+
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, module, action])
+  @@index([roleId])
+}
+
+model UserPermissionOverride {
+  id          String    @id @default(cuid())
+  userId      String
+  module      String
+  action      String
+  scope       String   @default("all")
+  granted     Boolean  @default(true)
+  expiresAt   DateTime?
+  reason      String?
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, module, action])
+}
+
+// ============================================================
+// ZAKAT TAMLIK — Shariah-compliant distribution tracking (from 5.1)
+// ============================================================
+
+model ZakatDistribution {
+  id            String   @id @default(cuid())
+  tenantId      String
+  studentId     String
+  amount        Float
+  purpose       String   // fee_waiver, food, books, medical, clothing
+  tamlikStatus  String   @default("completed") // pending, completed
+  approvedBy    String?
+  auditHash     String?  // digital audit trail hash
+  distributedAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student       Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, studentId])
+}
+
+// ============================================================
+// INFIRMARY — In-campus medical visits (from 5.1)
+// ============================================================
+
+model InfirmaryRecord {
+  id          String   @id @default(cuid())
+  tenantId    String
+  studentId   String
+  symptoms    String
+  diagnosis   String?
+  medication  String?
+  temperature Float?
+  severity    String   @default("mild") // mild, moderate, severe
+  status      String   @default("treated") // ongoing, treated, referred, discharged
+  doctorName  String?
+  visitedAt   DateTime @default(now())
+  dischargedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+// ============================================================
+// ACTIVITY LOG — System-wide event timeline (from 5.1)
+// ============================================================
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  tenantId    String
+  module      String
+  action      String   // create, update, delete, login, payment, etc.
+  entityType  String
+  entityId    String?
+  description String
+  performedBy String?
+  severity    String   @default("info") // info, warning, success, error
+  metadata    String?  // JSON
+  createdAt   DateTime @default(now())
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, module])
+}
+
+// ============================================================
+// SYSTEM ALERTS — Automated warnings (from 5.1)
+// ============================================================
+
+model SystemAlert {
+  id          String   @id @default(cuid())
+  tenantId    String
+  title       String
+  message     String
+  type        String   // low_stock, overdue, maintenance, fee_due, exam_reminder, zakat_due
+  severity    String   @default("medium") // low, medium, high, critical
+  module      String?
+  entityId    String?
+  isRead      Boolean  @default(false)
+  isResolved  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, isResolved])
+}
+
+// ============================================================
+// WEBSITE CMS — Full content management (from 5.1)
+// ============================================================
+
+model WebsiteSetting {
+  id                 String   @id @default(cuid())
+  tenantId           String   @unique
+  tagline            String?
+  primaryColor       String   @default("#059669")
+  logoUrl            String?
+  faviconUrl         String?
+  heroTitle          String?
+  heroSubtitle       String?
+  heroImageUrl       String?
+  heroCtaText        String   @default("Apply for Admission")
+  announcementText   String?
+  announcementActive Boolean  @default(false)
+  welcomeTitle       String?
+  welcomeBody        String?
+  welcomeAuthor      String?
+  welcomeAuthorRole  String?
+  facebook           String?
+  youtube            String?
+  instagram          String?
+  whatsapp           String?
+  telegram           String?
+  footerText         String?
+  showHijriDate      Boolean  @default(true)
+  showPrayerTimes    Boolean  @default(true)
+  metaDescription    String?
+  metaKeywords       String?
+  updatedAt          DateTime @updatedAt
+
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model WebsiteProgram {
+  id          String   @id @default(cuid())
+  tenantId    String
+  title       String
+  titleArabic String?
+  category    String   @default("academic") // academic, hifz, maktab, special
+  description String
+  curriculum  String   // JSON: [{year, subjects[]}]
+  duration    String?
+  minAge      Int?
+  icon        String   @default("BookOpen")
+  order       Int      @default(0)
+  isFeatured  Boolean  @default(false)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model WebsiteFaculty {
+  id            String   @id @default(cuid())
+  tenantId      String
+  name          String
+  nameArabic    String?
+  designation   String
+  qualification String?
+  subjects      String   // comma-separated
+  photoUrl      String?
+  bio           String?
+  email         String?
+  phone         String?
+  joinYear      Int?
+  isFeatured    Boolean  @default(false)
+  order         Int      @default(0)
+  isPublished   Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model WebsiteAlbum {
+  id          String   @id @default(cuid())
+  tenantId    String
+  title       String
+  description String?
+  coverUrl    String?
+  category    String   @default("event") // event, campus, graduation, sports, other
+  eventDate   DateTime?
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  photos      WebsitePhoto[]
+}
+
+model WebsitePhoto {
+  id        String   @id @default(cuid())
+  albumId   String
+  url       String
+  caption   String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  album     WebsiteAlbum @relation(fields: [albumId], references: [id], onDelete: Cascade)
+}
+
+model WebsiteTestimonial {
+  id         String   @id @default(cuid())
+  tenantId   String
+  name       String
+  role       String
+  content    String
+  rating     Int      @default(5)
+  photoUrl   String?
+  isApproved Boolean  @default(false)
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model WebsiteFAQ {
+  id          String   @id @default(cuid())
+  tenantId    String
+  question    String
+  answer      String
+  category    String   @default("general") // general, admission, fees, curriculum, donation
+  order       Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model WebsiteIslamicResource {
+  id          String   @id @default(cuid())
+  tenantId    String
+  type        String   // hadith, ayah, dua, quote
+  arabicText  String?
+  translation String
+  reference   String
+  narrator    String?
+  displayDate DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model WebsiteVideo {
+  id           String   @id @default(cuid())
+  tenantId     String
+  title        String
+  description  String?
+  youtubeId    String
+  thumbnailUrl String?
+  category     String   @default("event") // event, lecture, qirat, graduation, news
+  duration     String?
+  isPublished  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model WebsiteBlogPost {
+  id          String    @id @default(cuid())
+  tenantId    String
+  title       String
+  slug        String
+  excerpt     String?
+  content     String
+  imageUrl    String?
+  authorName  String?
+  authorRole  String?
+  tags        String?
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, slug])
+}
+
+model WebsiteFacility {
+  id          String   @id @default(cuid())
+  tenantId    String
+  title       String
+  description String
+  icon        String   @default("Building2")
+  imageUrl    String?
+  order       Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model WebsiteFounder {
+  id         String   @id @default(cuid())
+  tenantId   String
+  name       String
+  nameArabic String?
+  role       String   // founder, president, secretary, trustee
+  photoUrl   String?
+  bio        String?
+  message    String?
+  order      Int      @default(0)
+  isPublished Boolean @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================
+// INTEGRATION CONFIG — Admin-managed credentials (SMS, Payment, Email, Storage)
+// ============================================================
+
+model IntegrationConfig {
+  id         String   @id @default(cuid())
+  tenantId   String
+  provider   String   // sms_ssl, sms_twilio, pay_sslcommerz, pay_bkash, email_smtp, email_sendgrid, storage_s3, storage_cloudinary
+  category   String   // sms, payment, email, storage
+  config     String   // encrypted JSON: {apiKey, secret, senderId, ...}
+  isActive   Boolean  @default(false)
+  isSandbox  Boolean  @default(true) // sandbox vs production mode
+  lastTestedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, provider])
+  @@index([tenantId, category])
+}
+

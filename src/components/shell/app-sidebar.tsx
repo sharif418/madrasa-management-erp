@@ -21,7 +21,8 @@ import {
   Library, Heart, Calendar, Building2, Sparkles, Bot, CalendarClock, Globe,
   CreditCard, TrendingUp, IdCard, Award, FileText, Receipt, Gift, Armchair,
   CalendarCheck, DatabaseBackup, LayoutList, BookOpenText, FileEdit, ScrollText,
-  ChevronDown, type LucideIcon,
+  ChevronDown, ShieldCheck, Stethoscope, UtensilsCrossed, Activity,
+  type LucideIcon,
 } from "lucide-react";
 
 type NavItem = { key: ViewKey; icon: LucideIcon };
@@ -82,6 +83,7 @@ const GROUPS: NavGroup[] = [
       { key: "waivers", icon: Gift },
       { key: "wallet", icon: Wallet },
       { key: "donors", icon: Heart },
+      { key: "zakat", icon: Gift },
     ],
   },
   {
@@ -93,6 +95,9 @@ const GROUPS: NavGroup[] = [
       { key: "library", icon: Library },
       { key: "transport", icon: Bus },
       { key: "health", icon: HeartPulse },
+      { key: "infirmary", icon: Stethoscope },
+      { key: "security", icon: ShieldCheck },
+      { key: "mess", icon: UtensilsCrossed },
       { key: "inventory", icon: Package },
       { key: "calendar", icon: Calendar },
     ],
@@ -121,6 +126,7 @@ const GROUPS: NavGroup[] = [
       { key: "backup", icon: DatabaseBackup },
       { key: "ai", icon: Bot },
       { key: "billing", icon: CreditCard },
+      { key: "activity", icon: Activity },
       { key: "settings", icon: Settings },
       { key: "audit", icon: History },
     ],

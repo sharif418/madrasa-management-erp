@@ -46,7 +46,12 @@ export type ViewKey =
   | "ptm"
   | "quranlog"
   | "backup"
-  | "customreports";
+  | "customreports"
+  | "zakat"
+  | "infirmary"
+  | "security"
+  | "mess"
+  | "activity";
 
 type AuthScreen = "landing" | "login" | "signup";
 

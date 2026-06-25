@@ -1,17 +1,41 @@
+version: "3.8"
+
 services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: madrasa-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: madrasa_manager
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # App (production build)
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    image: madrasa-erp:latest
-    container_name: madrasa-erp
+    container_name: madrasa-app
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
-      - NODE_ENV=production
-      - DATABASE_URL=file:/app/db/custom.db
-      - MM_SECRET=${MM_SECRET:-change-me-in-production}
-      - NEXT_TELEMETRY_DISABLED=1
-    volumes:
-      - ./data:/app/db
+      DATABASE_URL: "postgresql://postgres:postgres@db:5432/madrasa_manager?schema=public"
+      MM_SECRET: "${MM_SECRET:-change-this-to-a-random-64-char-string}"
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
