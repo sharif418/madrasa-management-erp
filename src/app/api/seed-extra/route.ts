@@ -1,10 +1,13 @@
 // POST /api/seed-extra — adds demo attendance + fee collection + exam data
 // to make dashboards and reports look alive. Idempotent.
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { ok, fail } from "@/lib/api";
 
 export async function POST(_req: NextRequest) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ ok: false, error: 'Seed routes are disabled in production' }, { status: 403 });
+  }
   try {
     const tenant = await db.tenant.findFirst({
       where: { phone: "01700000000" },

@@ -1,5 +1,6 @@
 // RBAC permission helper — checks user roles + permissions for module+action
 import { db } from "@/lib/db";
+import { cacheWrap } from "@/lib/cache";
 import type { SessionUser } from "@/lib/session";
 
 export const MODULES = {
@@ -52,39 +53,42 @@ export async function checkPermission(
   module: ModuleKey | string,
   action: ActionKey | string
 ): Promise<boolean> {
-  // Fetch user roles with permissions
-  const userRoles = await db.userRole.findMany({
-    where: { userId: session.userId },
-    include: { role: true },
+  const cacheKey = `perm:${session.userId}:${module}:${action}`;
+  return cacheWrap(cacheKey, 120 * 1000, async () => {
+    // Fetch user roles with permissions
+    const userRoles = await db.userRole.findMany({
+      where: { userId: session.userId },
+      include: { role: true },
+    });
+
+    // Super Admin always has full access
+    if (userRoles.some((ur) => ur.role.name === "Super Admin")) {
+      return true;
+    }
+
+    // Check each role's permissions
+    for (const ur of userRoles) {
+      let perms: Record<string, string[]>;
+      try {
+        perms = JSON.parse(ur.role.permissions || "{}");
+      } catch {
+        continue;
+      }
+
+      // Check wildcard module
+      if (perms["*"] && (perms["*"].includes("*") || perms["*"].includes(action))) {
+        return true;
+      }
+
+      // Check specific module
+      const modulePerms = perms[module];
+      if (modulePerms && (modulePerms.includes("*") || modulePerms.includes(action))) {
+        return true;
+      }
+    }
+
+    return false;
   });
-
-  // Super Admin always has full access
-  if (userRoles.some((ur) => ur.role.name === "Super Admin")) {
-    return true;
-  }
-
-  // Check each role's permissions
-  for (const ur of userRoles) {
-    let perms: Record<string, string[]>;
-    try {
-      perms = JSON.parse(ur.role.permissions || "{}");
-    } catch {
-      continue;
-    }
-
-    // Check wildcard module
-    if (perms["*"] && (perms["*"].includes("*") || perms["*"].includes(action))) {
-      return true;
-    }
-
-    // Check specific module
-    const modulePerms = perms[module];
-    if (modulePerms && (modulePerms.includes("*") || modulePerms.includes(action))) {
-      return true;
-    }
-  }
-
-  return false;
 }
 
 /**

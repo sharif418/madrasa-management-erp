@@ -1,13 +1,16 @@
+// Root page — landing page for unauthenticated users.
+// Authenticated users are redirected to /dashboard.
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useApp } from "@/store/app-store";
 import { LandingPage } from "@/components/landing/landing-page";
-import { AppShell } from "@/components/shell/app-shell";
 import { Loader2 } from "lucide-react";
 
 export default function Home() {
-  const { user, locale, dir, setUser, setLocale } = useApp();
+  const { user, setUser, locale, dir, setLocale } = useApp();
+  const router = useRouter();
   const [bootstrapped, setBootstrapped] = useState(false);
 
   // On mount: check if user has a valid session
@@ -24,6 +27,9 @@ export default function Home() {
             if (json.data.tenant?.language) {
               setLocale(json.data.tenant.language as "bn" | "en" | "ar");
             }
+            // Redirect authenticated users to dashboard
+            router.replace("/dashboard");
+            return;
           }
         }
       } catch {
@@ -33,7 +39,7 @@ export default function Home() {
       }
     })();
     return () => { alive = false; };
-  }, [setUser, setLocale]);
+  }, [setUser, setLocale, router]);
 
   // Sync <html lang> + dir with current locale
   useEffect(() => {
@@ -52,5 +58,11 @@ export default function Home() {
     );
   }
 
-  return user ? <AppShell /> : <LandingPage />;
+  // If user is logged in but redirect hasn't happened yet
+  if (user) {
+    router.replace("/dashboard");
+    return null;
+  }
+
+  return <LandingPage />;
 }

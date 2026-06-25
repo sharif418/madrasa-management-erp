@@ -146,6 +146,7 @@ model User {
   permissionOverrides UserPermissionOverride[]
 
   @@unique([tenantId, phone])
+  @@index([tenantId])
 }
 
 model Role {
@@ -238,6 +239,7 @@ model Student {
   isZakatEligible Boolean  @default(false)
   isActive        Boolean  @default(true)
   admissionDate   DateTime @default(now())
+  deletedAt       DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -266,6 +268,8 @@ model Student {
   infirmaryRecords     InfirmaryRecord[]
 
   @@unique([tenantId, rollNo])
+  @@index([tenantId])
+  @@index([tenantId, classId])
 }
 
 model Teacher {
@@ -284,6 +288,7 @@ model Teacher {
   address     String?
   photoUrl    String?
   campusId    String?
+  deletedAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -292,6 +297,8 @@ model Teacher {
   payrolls    Payroll[]
   ptmSessions PtmSession[]
   staffLeaves StaffLeave[]
+
+  @@index([tenantId])
 }
 
 // ============================================================
@@ -313,6 +320,8 @@ model StaffLeave {
 
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   teacher     Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
 }
 
 // ============================================================
@@ -324,10 +333,10 @@ model Payroll {
   tenantId    String
   teacherId   String
   month       String    // YYYY-MM
-  baseSalary  Float     @default(0)
-  deduction   Float     @default(0)
+  baseSalary  Decimal   @default(0)
+  deduction   Decimal   @default(0)
   bonus       Float     @default(0)
-  netPay      Float     @default(0)
+  netPay      Decimal   @default(0)
   status      String    @default("pending") // pending, paid
   paidAt      DateTime?
   createdAt   DateTime  @default(now())
@@ -337,6 +346,7 @@ model Payroll {
   teacher     Teacher   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, teacherId, month])
+  @@index([tenantId, month])
 }
 
 // ============================================================
@@ -357,6 +367,7 @@ model HifzRecord {
   mistakesCount     Int      @default(0)
   notes             String?
   status            String   @default("completed") // completed, revision, weak
+  deletedAt         DateTime?
   recordedAt        DateTime @default(now())
   // Spaced-repetition fields (auto-computed on create)
   nextRevisionDate  DateTime?
@@ -366,6 +377,9 @@ model HifzRecord {
   tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   student       Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   teacher       User?    @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, studentId])
+  @@index([tenantId, nextRevisionDate])
 }
 
 // ============================================================
@@ -404,7 +418,8 @@ model Fund {
   tenantId    String
   name        String
   type        String   // general, lillah, waqf, zakat, sadaqah
-  balance     Float    @default(0)
+  balance     Decimal  @default(0)
+  deletedAt   DateTime?
   description String?
   createdAt   DateTime @default(now())
 
@@ -418,7 +433,7 @@ model Transaction {
   id            String   @id @default(cuid())
   tenantId      String
   fundId        String
-  amount        Float
+  amount        Decimal
   type          String   // income, expense, transfer
   category      String?  // donation, fee, salary, maintenance, etc.
   description   String?
@@ -427,18 +442,22 @@ model Transaction {
   tamlikProof   String?  // JSON proof for zakat tamlik
   paymentMethod String?  // cash, bkash, nagad, bank, wallet
   date          DateTime @default(now())
+  deletedAt     DateTime?
   createdAt     DateTime @default(now())
 
   tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   fund          Fund     @relation(fields: [fundId], references: [id], onDelete: Cascade)
   student       Student? @relation(fields: [relatedStudentId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, date])
+  @@index([tenantId, fundId])
 }
 
 model Wallet {
   id        String   @id @default(cuid())
   studentId String   @unique
   tenantId  String
-  balance   Float    @default(0)
+  balance   Decimal  @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -451,7 +470,7 @@ model WalletLog {
   id          String   @id @default(cuid())
   walletId    String
   tenantId    String
-  amount      Float
+  amount      Decimal
   trxType     String   // top_up, canteen, laundry, fee_deduction
   description String?
   createdAt   DateTime @default(now())
@@ -465,7 +484,7 @@ model FeeStructure {
   tenantId  String
   name      String
   classId   String?
-  amount    Float
+  amount    Decimal
   type      String   // tuition, admission, exam, hostel, transport
   frequency String   @default("monthly") // monthly, quarterly, yearly, one_time
   lateFeePerDay Float @default(0) // automatic late fee per overdue day
@@ -481,12 +500,13 @@ model FeeCollection {
   tenantId   String
   studentId  String
   feeStructureId String?
-  amount     Float
-  paidAmount Float
+  amount     Decimal
+  paidAmount Decimal
   lateFee    Float    @default(0) // accumulated late-fee amount
   dueDate    DateTime?
   paidDate   DateTime?
   status     String   @default("pending") // pending, partial, paid, overdue
+  deletedAt  DateTime?
   method     String?  // cash, bkash, nagad, bank
   notes      String?
   createdAt  DateTime @default(now())
@@ -494,6 +514,9 @@ model FeeCollection {
   tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   feeStructure FeeStructure? @relation(fields: [feeStructureId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, studentId])
+  @@index([tenantId, status])
 }
 
 model FeeWaiver {
@@ -534,6 +557,7 @@ model Attendance {
   marker    User?    @relation(fields: [markedBy], references: [id], onDelete: SetNull)
 
   @@unique([tenantId, personId, personType, date, session])
+  @@index([tenantId, date])
 }
 
 model Exam {
@@ -561,9 +585,12 @@ model ExamResult {
   total     Float    @default(100)
   grade     String?
   remarks   String?
+  deletedAt DateTime?
 
   exam      Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
   student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([examId, studentId])
 }
 
 // ============================================================
@@ -582,6 +609,8 @@ model Notice {
   createdAt   DateTime @default(now())
 
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, publishedAt])
 }
 
 model AuditLog {
@@ -598,6 +627,8 @@ model AuditLog {
 
   tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   actor      User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
 }
 
 // ============================================================
@@ -830,6 +861,8 @@ model BookLending {
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   book        Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
   student     Student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, status])
 }
 
 // ============================================================
@@ -864,7 +897,7 @@ model Donation {
   tenantId    String
   donorId     String?
   donorName   String
-  amount      Float
+  amount      Decimal
   fund        String   // zakat, lillah, waqf, sadaqah, general
   purpose     String?
   paymentMethod String? // cash, bkash, nagad, bank, card, sslcommerz
@@ -872,10 +905,13 @@ model Donation {
   isRecurring Boolean  @default(false)
   status      String   @default("confirmed") // pending, confirmed, failed
   date        DateTime @default(now())
+  deletedAt   DateTime?
   createdAt   DateTime @default(now())
 
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   donor       Donor?   @relation(fields: [donorId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, date])
 }
 
 // ============================================================
@@ -911,7 +947,7 @@ model Asset {
   category    String   @default("other") // furniture, equipment, building, vehicle, kitchen, it, other
   serialNumber String?
   purchaseDate DateTime?
-  purchaseCost Float   @default(0)
+  purchaseCost Decimal @default(0)
   currentValue Float  @default(0)
   condition   String   @default("good") // excellent, good, fair, poor, damaged
   location    String?
@@ -931,7 +967,7 @@ model InventoryItem {
   unit        String   @default("pcs")
   quantity    Int      @default(0)
   minStock    Int      @default(10)
-  unitCost    Float    @default(0)
+  unitCost    Decimal  @default(0)
   lastRestock DateTime?
   createdAt   DateTime @default(now())
 
@@ -962,6 +998,8 @@ model Feedback {
   createdAt   DateTime @default(now())
 
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
 }
 
 // ============================================================
@@ -1130,6 +1168,8 @@ model Notification {
   createdAt   DateTime @default(now())
 
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, sentAt])
 }
 
 // ============================================================
@@ -1315,7 +1355,7 @@ model ZakatDistribution {
   id            String   @id @default(cuid())
   tenantId      String
   studentId     String
-  amount        Float
+  amount        Decimal
   purpose       String   // fee_waiver, food, books, medical, clothing
   tamlikStatus  String   @default("completed") // pending, completed
   approvedBy    String?

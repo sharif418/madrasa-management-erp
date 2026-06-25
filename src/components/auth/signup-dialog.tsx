@@ -1,6 +1,7 @@
 // Signup dialog — register a new madrasa (tenant) with super admin
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useApp } from "@/store/app-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,8 @@ import { toast } from "sonner";
 import type { Locale } from "@/i18n/translations";
 
 export function SignupDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
-  const { t, setUser, setScreen, locale } = useApp();
+  const { t, setUser, locale } = useApp();
+  const router = useRouter();
   const [madrasaName, setMadrasaName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -59,8 +61,8 @@ export function SignupDialog({ open, onOpenChange }: { open: boolean; onOpenChan
         return;
       }
       setUser(json.data.user, json.data.tenant.name);
-      setScreen("landing");
       onOpenChange(false);
+      router.push("/dashboard");
       toast.success(`Welcome! Your madrasa "${json.data.tenant.name}" is ready.`);
     } catch {
       toast.error("Network error. Please try again.");

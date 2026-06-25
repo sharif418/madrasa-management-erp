@@ -2,14 +2,17 @@
 // Premium-feel navigation inspired by Linear / Notion / Vercel dashboards:
 //   • domain-based groups (Overview, People, Academic, Quran & Ibadah, Finance,
 //     Operations, Communication, Tools & System)
-//   • each group is collapsible (click header to toggle)
-//   • first group expanded by default; the group containing the active view
-//     is auto-expanded
+//   • each group is collapsible (click header to toggle) — true accordion mode
+//   • RBAC: menu items filtered by user roles
+//   • URL-based navigation using Next.js <Link>
+//   • inline search/filter box
 //   • dark emerald gradient (always dark, even in light theme)
 //   • brand header + user footer preserved from previous design
 "use client";
-import { useState } from "react";
-import { useApp, type ViewKey } from "@/store/app-store";
+import { useState, useMemo } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useApp } from "@/store/app-store";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -22,10 +25,128 @@ import {
   CreditCard, TrendingUp, IdCard, Award, FileText, Receipt, Gift, Armchair,
   CalendarCheck, DatabaseBackup, LayoutList, BookOpenText, FileEdit, ScrollText,
   ChevronDown, ShieldCheck, Stethoscope, UtensilsCrossed, Activity,
+  Search,
   type LucideIcon,
 } from "lucide-react";
 
-type NavItem = { key: ViewKey; icon: LucideIcon };
+// ─── Route mapping ────────────────────────────────────────────────
+// Each view key maps to a URL path under /(dashboard)/
+const VIEW_ROUTES: Record<string, string> = {
+  dashboard: "/dashboard",
+  analytics: "/analytics",
+  dailyreport: "/dailyreport",
+  students: "/students",
+  teachers: "/teachers",
+  admission: "/admission",
+  alumni: "/alumni",
+  ptm: "/ptm",
+  academic: "/academic",
+  timetable: "/timetable",
+  attendance: "/attendance",
+  exams: "/exams",
+  seatplan: "/seatplan",
+  hifz: "/hifz",
+  quranlog: "/quranlog",
+  muhasaba: "/muhasaba",
+  finance: "/finance",
+  fees: "/fees",
+  waivers: "/waivers",
+  wallet: "/wallet",
+  donors: "/donors",
+  zakat: "/zakat",
+  hostel: "/hostel",
+  library: "/library",
+  transport: "/transport",
+  health: "/health",
+  infirmary: "/infirmary",
+  security: "/security",
+  mess: "/mess",
+  inventory: "/inventory",
+  calendar: "/calendar",
+  notices: "/notices",
+  communications: "/communications",
+  feedback: "/feedback",
+  website: "/website",
+  reports: "/reports",
+  customreports: "/customreports",
+  idcards: "/idcards",
+  certificates: "/certificates",
+  import: "/import",
+  backup: "/backup",
+  ai: "/ai",
+  billing: "/billing",
+  activity: "/activity",
+  settings: "/settings",
+  audit: "/audit",
+};
+
+// ─── RBAC Role → Module Permission Map ────────────────────────────
+// Defines which roles can see which sidebar items.
+// "Super Admin" and roles with "*" see everything (handled in code).
+const ROLE_MODULE_ACCESS: Record<string, string[] | "*"> = {
+  "Super Admin": "*",
+  Admin: "*",
+  Principal: [
+    "dashboard", "analytics", "dailyreport",
+    "students", "teachers", "admission", "alumni", "ptm",
+    "academic", "timetable", "attendance", "exams", "seatplan",
+    "hifz", "quranlog", "muhasaba",
+    "finance", "fees", "waivers", "wallet", "donors", "zakat",
+    "hostel", "library", "transport", "health", "infirmary", "security", "mess", "inventory", "calendar",
+    "notices", "communications", "feedback", "website",
+    "reports", "customreports", "idcards", "certificates", "import", "backup",
+    "ai", "activity", "settings", "audit",
+  ],
+  Teacher: [
+    "dashboard", "dailyreport",
+    "students", "ptm",
+    "academic", "timetable", "attendance", "exams", "seatplan",
+    "hifz", "quranlog", "muhasaba",
+    "notices", "feedback",
+    "calendar", "library",
+    "reports",
+  ],
+  Accountant: [
+    "dashboard", "analytics", "dailyreport",
+    "students",
+    "finance", "fees", "waivers", "wallet", "donors", "zakat",
+    "reports", "customreports",
+    "billing",
+    "notices",
+  ],
+  Librarian: [
+    "dashboard",
+    "library",
+    "notices",
+  ],
+  Warden: [
+    "dashboard",
+    "students",
+    "hostel", "mess", "security",
+    "health", "infirmary",
+    "attendance",
+    "notices", "feedback",
+  ],
+  Parent: [
+    "dashboard",
+    "students",
+    "hifz", "quranlog",
+    "fees",
+    "attendance", "exams",
+    "notices",
+    "feedback",
+  ],
+  Student: [
+    "dashboard",
+    "hifz", "quranlog", "muhasaba",
+    "attendance", "exams",
+    "notices",
+    "library",
+  ],
+};
+
+// ─── Navigation structure ─────────────────────────────────────────
+type NavItem = { key: string; icon: LucideIcon };
 type NavGroup = { id: string; label: string; icon: LucideIcon; items: NavItem[] };
 
 const GROUPS: NavGroup[] = [
@@ -133,15 +254,66 @@ const GROUPS: NavGroup[] = [
   },
 ];
 
-export function AppSidebar() {
-  const { view, setView, t, sidebarOpen, setSidebarOpen, tenantName, user } = useApp();
-  // Expanded groups — Overview expanded by default. Active-view's group is
-  // force-expanded (independent of this state) so users always see where they are.
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({ overview: true });
+// ─── Helpers ──────────────────────────────────────────────────────
 
-  const activeGroupId = GROUPS.find((g) => g.items.some((it) => it.key === view))?.id;
-  const isExpanded = (id: string) => id === activeGroupId || !!expanded[id];
-  const toggle = (id: string) => setExpanded((p) => ({ ...p, [id]: !p[id] }));
+/** Check if a user's roles grant access to a module key */
+function hasAccess(roles: string[], moduleKey: string): boolean {
+  for (const role of roles) {
+    const access = ROLE_MODULE_ACCESS[role];
+    if (access === "*") return true;
+    if (Array.isArray(access) && access.includes(moduleKey)) return true;
+  }
+  return false;
+}
+
+/** Get the active view key from pathname */
+function getActiveKey(pathname: string): string {
+  // Strip leading slash and get the first segment
+  const segment = pathname.replace(/^\//, "").split("/")[0];
+  return segment || "dashboard";
+}
+
+// ─── Component ────────────────────────────────────────────────────
+
+export function AppSidebar() {
+  const { t, sidebarOpen, setSidebarOpen, tenantName, user } = useApp();
+  const pathname = usePathname();
+  const activeKey = getActiveKey(pathname);
+
+  // Inline search/filter
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // True accordion — only one group open at a time (plus active group auto-open)
+  const activeGroupId = GROUPS.find((g) => g.items.some((it) => it.key === activeKey))?.id ?? "overview";
+  const [openGroupId, setOpenGroupId] = useState<string>(activeGroupId);
+
+  const toggle = (id: string) => {
+    setOpenGroupId((prev) => (prev === id ? "" : id));
+  };
+
+  // Always expand the group containing the active item
+  const isExpanded = (id: string) => id === activeGroupId || id === openGroupId;
+
+  // RBAC-filtered groups — memoized so it doesn't re-compute on every render
+  const userRoles = user?.roles ?? [];
+  const filteredGroups = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+
+    return GROUPS.map((g) => {
+      // Filter items by role access
+      let items = g.items.filter((item) => hasAccess(userRoles, item.key));
+
+      // Filter by search query (match against translated label)
+      if (q) {
+        items = items.filter((item) => {
+          const label = t(`nav.${item.key}`).toLowerCase();
+          return label.includes(q) || item.key.includes(q);
+        });
+      }
+
+      return { ...g, items };
+    }).filter((g) => g.items.length > 0); // Remove empty groups
+  }, [userRoles, searchQuery, t]);
 
   return (
     <>
@@ -162,7 +334,7 @@ export function AppSidebar() {
       >
         {/* Brand */}
         <div className="flex h-16 items-center justify-between px-4 border-b border-emerald-800/50">
-          <div className="flex items-center gap-2.5">
+          <Link href="/dashboard" className="flex items-center gap-2.5 min-w-0">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 text-emerald-950 shadow-md">
               <Moon className="h-5 w-5" />
             </div>
@@ -170,7 +342,7 @@ export function AppSidebar() {
               <span className="text-sm font-bold truncate">{tenantName || t("common.appName")}</span>
               <span className="text-[10px] text-emerald-300/70">{t("common.tagline")}</span>
             </div>
-          </div>
+          </Link>
           <Button
             variant="ghost"
             size="icon"
@@ -181,10 +353,24 @@ export function AppSidebar() {
           </Button>
         </div>
 
+        {/* Inline Search */}
+        <div className="px-3 pt-3 pb-1">
+          <div className="relative">
+            <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-emerald-400/60" />
+            <input
+              type="text"
+              placeholder={t("common.search") || "Search..."}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-md bg-emerald-800/30 border border-emerald-700/30 py-1.5 ps-8 pe-3 text-xs text-emerald-100 placeholder:text-emerald-400/50 outline-none focus:border-emerald-500/50 focus:bg-emerald-800/50 transition-colors"
+            />
+          </div>
+        </div>
+
         {/* Nav */}
-        <ScrollArea className="flex-1 px-3 py-4">
-          <nav className="space-y-3">
-            {GROUPS.map((g) => {
+        <ScrollArea className="flex-1 px-3 py-3">
+          <nav className="space-y-2">
+            {filteredGroups.map((g) => {
               const open = isExpanded(g.id);
               const isActiveGroup = g.id === activeGroupId;
               return (
@@ -222,11 +408,13 @@ export function AppSidebar() {
                   {open ? (
                     <div className="mt-1 space-y-0.5 ps-2">
                       {g.items.map((item) => {
-                        const active = view === item.key;
+                        const href = VIEW_ROUTES[item.key] || `/${item.key}`;
+                        const active = activeKey === item.key;
                         return (
-                          <button
+                          <Link
                             key={item.key}
-                            onClick={() => setView(item.key)}
+                            href={href}
+                            onClick={() => setSidebarOpen(false)}
                             className={cn(
                               "w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all",
                               active
@@ -236,7 +424,7 @@ export function AppSidebar() {
                           >
                             <item.icon className="h-4 w-4 flex-shrink-0" />
                             <span className="truncate">{t(`nav.${item.key}`)}</span>
-                          </button>
+                          </Link>
                         );
                       })}
                     </div>

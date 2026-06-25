@@ -1,7 +1,7 @@
 // POST /api/seed — populate demo data for first-time users (no auth required)
 // Creates a demo tenant "Darul Uloom Demo Madrasa" + admin user + sample students,
 // teachers, classes, funds, hifz records, notices. Idempotent — safe to call multiple times.
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
 import { ok, fail } from "@/lib/api";
@@ -10,6 +10,9 @@ const DEMO_PHONE = "01700000000";
 const DEMO_PASSWORD = "demo123";
 
 export async function POST(_req: NextRequest) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ ok: false, error: 'Seed routes are disabled in production' }, { status: 403 });
+  }
   try {
     // Find or create demo tenant
     let tenant = await db.tenant.findFirst({

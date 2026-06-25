@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     "Islamic school", "Bangladesh", "Qawmi", "Alia", "multi-tenant SaaS",
   ],
   authors: [{ name: "Madrasa Manager" }],
-  icons: { icon: "/logo.svg" },
+  icons: { icon: "/logo.png" },
   manifest: "/manifest.json",
   openGraph: {
     title: "Madrasa Manager — Complete Madrasa Management ERP",

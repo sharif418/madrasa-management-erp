@@ -4,6 +4,7 @@
 // Search results are rendered by the <SearchResults /> sub-component (debounced fetch
 // to /api/search across students, teachers, donors, books, transactions).
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { Command as CommandPrimitive } from "cmdk";
 import {
   Search, LayoutDashboard, Users, GraduationCap, BookOpen,
@@ -11,7 +12,7 @@ import {
   FileBarChart, UserPlus, Receipt, ClipboardCheck, BellPlus,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useApp, type ViewKey } from "@/store/app-store";
+import { useApp } from "@/store/app-store";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -21,30 +22,30 @@ import {
 import { cn } from "@/lib/utils";
 import { SearchResults } from "@/components/shell/search-results";
 
-type NavItem = { key: ViewKey; icon: LucideIcon };
+type NavItem = { key: string; icon: LucideIcon; href: string };
 const NAV_ITEMS: NavItem[] = [
-  { key: "dashboard", icon: LayoutDashboard },
-  { key: "students", icon: Users },
-  { key: "teachers", icon: GraduationCap },
-  { key: "academic", icon: BookOpen },
-  { key: "hifz", icon: BookMarked },
-  { key: "finance", icon: Banknote },
-  { key: "wallet", icon: Wallet },
-  { key: "attendance", icon: ClipboardList },
-  { key: "exams", icon: FileBarChart },
-  { key: "notices", icon: Bell },
-  { key: "settings", icon: Settings },
-  { key: "audit", icon: History },
-  { key: "reports", icon: FileBarChart },
+  { key: "dashboard", icon: LayoutDashboard, href: "/dashboard" },
+  { key: "students", icon: Users, href: "/students" },
+  { key: "teachers", icon: GraduationCap, href: "/teachers" },
+  { key: "academic", icon: BookOpen, href: "/academic" },
+  { key: "hifz", icon: BookMarked, href: "/hifz" },
+  { key: "finance", icon: Banknote, href: "/finance" },
+  { key: "wallet", icon: Wallet, href: "/wallet" },
+  { key: "attendance", icon: ClipboardList, href: "/attendance" },
+  { key: "exams", icon: FileBarChart, href: "/exams" },
+  { key: "notices", icon: Bell, href: "/notices" },
+  { key: "settings", icon: Settings, href: "/settings" },
+  { key: "audit", icon: History, href: "/audit" },
+  { key: "reports", icon: FileBarChart, href: "/reports" },
 ];
 
-type QuickAction = { id: string; icon: LucideIcon; view: ViewKey; key: string };
+type QuickAction = { id: string; icon: LucideIcon; href: string; key: string };
 const QUICK_ACTIONS: QuickAction[] = [
-  { id: "addStudent", icon: UserPlus, view: "students", key: "command.addStudent" },
-  { id: "recordHifz", icon: BookMarked, view: "hifz", key: "command.recordHifz" },
-  { id: "collectFee", icon: Receipt, view: "finance", key: "command.collectFee" },
-  { id: "markAttendance", icon: ClipboardCheck, view: "attendance", key: "command.markAttendance" },
-  { id: "addNotice", icon: BellPlus, view: "notices", key: "command.addNotice" },
+  { id: "addStudent", icon: UserPlus, href: "/students", key: "command.addStudent" },
+  { id: "recordHifz", icon: BookMarked, href: "/hifz", key: "command.recordHifz" },
+  { id: "collectFee", icon: Receipt, href: "/finance", key: "command.collectFee" },
+  { id: "markAttendance", icon: ClipboardCheck, href: "/attendance", key: "command.markAttendance" },
+  { id: "addNotice", icon: BellPlus, href: "/notices", key: "command.addNotice" },
 ];
 
 export function CommandPalette({
@@ -54,7 +55,8 @@ export function CommandPalette({
   open: boolean;
   onOpenChange: (o: boolean) => void;
 }) {
-  const { t, setView, dir } = useApp();
+  const { t, dir } = useApp();
+  const router = useRouter();
   const [query, setQuery] = React.useState("");
 
   // Reset query when palette closes so next open starts fresh.
@@ -62,8 +64,8 @@ export function CommandPalette({
     if (!open) setQuery("");
   }, [open]);
 
-  const go = (v: ViewKey) => {
-    setView(v);
+  const go = (href: string) => {
+    router.push(href);
     onOpenChange(false);
   };
 
@@ -115,16 +117,16 @@ export function CommandPalette({
             )}
 
             {/* Global search results — debounced fetch to /api/search */}
-            <SearchResults query={query} onNavigate={go} />
+            <SearchResults query={query} onNavigate={(v) => go(`/${v}`)} />
 
             {/* Navigation */}
             <CommandSeparator />
             <CommandGroup heading={t("command.navigation")}>
-              {NAV_ITEMS.map(({ key, icon: Icon }) => (
+              {NAV_ITEMS.map(({ key, icon: Icon, href }) => (
                 <CommandItem
                   key={key}
                   value={`nav ${key} ${t(`nav.${key}`)}`}
-                  onSelect={() => go(key)}
+                  onSelect={() => go(href)}
                 >
                   <span className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
                     <Icon className="h-4 w-4" />
@@ -138,11 +140,11 @@ export function CommandPalette({
 
             {/* Quick Actions */}
             <CommandGroup heading={t("command.actions")}>
-              {QUICK_ACTIONS.map(({ id, icon: Icon, view, key }) => (
+              {QUICK_ACTIONS.map(({ id, icon: Icon, href, key }) => (
                 <CommandItem
                   key={id}
                   value={`act ${id} ${t(key)}`}
-                  onSelect={() => go(view)}
+                  onSelect={() => go(href)}
                 >
                   <span className="flex h-7 w-7 items-center justify-center rounded-md bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300">
                     <Icon className="h-4 w-4" />

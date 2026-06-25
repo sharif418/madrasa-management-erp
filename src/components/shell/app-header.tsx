@@ -3,6 +3,7 @@
 // Subtle vertical dividers separate logical action groups; consistent icon
 // sizing throughout. Sticky + backdrop-blur; adapts to light/dark.
 "use client";
+import { usePathname } from "next/navigation";
 import { useApp } from "@/store/app-store";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
@@ -17,7 +18,9 @@ export function AppHeader({
 }: {
   onOpenCommandPalette?: () => void;
 }) {
-  const { t, setSidebarOpen, view, logout } = useApp();
+  const { t, setSidebarOpen, logout } = useApp();
+  const pathname = usePathname();
+  const view = pathname.replace(/^\//, "").split("/")[0] || "dashboard";
 
   const onLogout = async () => {
     try {

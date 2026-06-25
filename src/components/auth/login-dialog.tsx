@@ -1,6 +1,7 @@
 // Login dialog — phone + password authentication
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useApp } from "@/store/app-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,8 @@ import { Moon, Loader2, LogIn, UserCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export function LoginDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
-  const { t, setUser, setScreen } = useApp();
+  const { t, setUser } = useApp();
+  const router = useRouter();
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -42,8 +44,8 @@ export function LoginDialog({ open, onOpenChange }: { open: boolean; onOpenChang
         return;
       }
       setUser(json.data.user, json.data.tenant.name);
-      setScreen("landing");
       onOpenChange(false);
+      router.push("/dashboard");
       toast.success(`Assalamu Alaikum, ${json.data.user.name}!`);
     } catch {
       toast.error("Network error. Please try again.");
@@ -71,8 +73,8 @@ export function LoginDialog({ open, onOpenChange }: { open: boolean; onOpenChang
         return;
       }
       setUser(json.data.user, json.data.tenant.name);
-      setScreen("landing");
       onOpenChange(false);
+      router.push("/dashboard");
       toast.success("Demo account loaded — explore freely!");
     } catch {
       toast.error("Network error. Please try again.");

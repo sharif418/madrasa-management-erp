@@ -5,53 +5,9 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import type { Locale } from "@/i18n/translations";
 import { translate, localeDirs } from "@/i18n/translations";
 
-export type ViewKey =
-  | "dashboard"
-  | "students"
-  | "teachers"
-  | "academic"
-  | "hifz"
-  | "finance"
-  | "wallet"
-  | "attendance"
-  | "exams"
-  | "notices"
-  | "settings"
-  | "audit"
-  | "reports"
-  | "import"
-  | "hostel"
-  | "muhasaba"
-  | "library"
-  | "donors"
-  | "calendar"
-  | "transport"
-  | "health"
-  | "inventory"
-  | "feedback"
-  | "admission"
-  | "alumni"
-  | "ai"
-  | "timetable"
-  | "website"
-  | "billing"
-  | "communications"
-  | "analytics"
-  | "idcards"
-  | "certificates"
-  | "dailyreport"
-  | "fees"
-  | "waivers"
-  | "seatplan"
-  | "ptm"
-  | "quranlog"
-  | "backup"
-  | "customreports"
-  | "zakat"
-  | "infirmary"
-  | "security"
-  | "mess"
-  | "activity";
+// Navigation keys kept for type compatibility with translation files if needed,
+// but actual navigation state is now driven by Next.js URL routing.
+export type ViewKey = string;
 
 type AuthScreen = "landing" | "login" | "signup";
 
@@ -72,9 +28,7 @@ type AppState = {
   setScreen: (s: AuthScreen) => void;
   logout: () => void;
 
-  // Navigation
-  view: ViewKey;
-  setView: (v: ViewKey) => void;
+  // Navigation state is now handled by Next.js URL router
 
   // Language
   locale: Locale;
@@ -101,11 +55,8 @@ export const useApp = create<AppState>()(
         set({ user, tenantName, screen: user ? "landing" : "landing" }),
       setScreen: (s) => set({ screen: s }),
       logout: () => {
-        set({ user: null, tenantName: null, screen: "landing", view: "dashboard" });
+        set({ user: null, tenantName: null, screen: "landing" });
       },
-
-      view: "dashboard",
-      setView: (v) => set({ view: v, sidebarOpen: false }),
 
       locale: "bn",
       setLocale: (l) => set({ locale: l }),
@@ -127,7 +78,6 @@ export const useApp = create<AppState>()(
         user: s.user,
         tenantName: s.tenantName,
         screen: s.screen,
-        view: s.view,
       }),
     }
   )
