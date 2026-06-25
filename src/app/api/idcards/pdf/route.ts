@@ -82,7 +82,7 @@ export async function POST(req: Request) {
       entityName: `ID Cards PDF (${type}, ${people.length} cards)`,
       details: { type, count: people.length, ids: ids.slice(0, 50) },
     });
-    return new NextResponse(pdfBytes, {
+    return new NextResponse(Buffer.from(pdfBytes), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",

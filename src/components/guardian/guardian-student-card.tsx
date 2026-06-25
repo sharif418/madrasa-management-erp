@@ -57,7 +57,7 @@ export function GuardianStudentCard({
           </AvatarFallback>
         </Avatar>
 
-        <div className="min-w-0 flex-1" dir={dir}>
+        <div className="min-w-0 flex-1" dir={dir()}>
           <div className="flex items-center gap-2">
             <h4 className="truncate text-sm font-semibold sm:text-base">{s.name}</h4>
             {s.isHafiz && (
@@ -92,7 +92,7 @@ export function GuardianStudentCard({
 
         <ChevronRight
           className={`size-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 ${
-            dir === "rtl" ? "rotate-180 group-hover:-translate-x-0.5" : ""
+            dir() === "rtl" ? "rotate-180 group-hover:-translate-x-0.5" : ""
           }`}
         />
       </CardContent>

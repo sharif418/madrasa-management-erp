@@ -1,7 +1,7 @@
 // Transactions API — list (filters + pagination) & create (income/expense/transfer-Tamlik).
 // All multi-table writes happen inside db.$transaction for atomicity.
 import { db } from "@/lib/db";
-import { ok, fail, withSession, auditAfter, forbidden } from "@/lib/api";
+import { ok, fail, withSession, auditAfter, forbidden, unauthorized } from "@/lib/api";
 import { checkPermission } from "@/lib/permissions";
 import { cacheInvalidate } from "@/lib/cache";
 

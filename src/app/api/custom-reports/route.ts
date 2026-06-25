@@ -102,7 +102,7 @@ export async function POST(req: Request) {
   const colW = headers.map(() => Math.floor(usableW / headers.length));
   addTable(ctx, headers, dataRows, colW);
   const bytes = await finalizePdf(ctx);
-  return new NextResponse(bytes, {
+  return new NextResponse(Buffer.from(bytes), {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",

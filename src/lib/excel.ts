@@ -8,7 +8,7 @@ export type ExcelSheet = {
   rows: (string | number)[][];
 };
 
-const EMERALD_FILL: Partial<ExcelJS.Fill> = {
+const EMERALD_FILL = {
   type: "pattern",
   pattern: "solid",
   fgColor: { argb: "FF059669" }, // emerald-600
@@ -37,7 +37,7 @@ export async function generateExcel(
     ws.addRow(sheet.headers);
     const headerRow = ws.getRow(1);
     headerRow.eachCell((cell) => {
-      cell.fill = EMERALD_FILL;
+      cell.fill = EMERALD_FILL as ExcelJS.Fill;
       cell.font = HEADER_FONT;
       cell.alignment = { vertical: "middle", horizontal: "left" };
       cell.border = {

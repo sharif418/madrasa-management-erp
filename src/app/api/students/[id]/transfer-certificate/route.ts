@@ -104,7 +104,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
       details: { type: "transfer-certificate" },
     });
 
-    return new NextResponse(pdfBytes, {
+    return new NextResponse(Buffer.from(pdfBytes), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",

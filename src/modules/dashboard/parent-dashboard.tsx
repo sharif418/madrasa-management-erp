@@ -138,7 +138,7 @@ function ChildCard({ child, locale, t, setView }: { child: Child; locale: string
 }
 
 export function ParentDashboard() {
-  const { t, locale, user, setView } = useApp();
+  const { t, locale, user, setView } = useApp() as { t: (key: string, params?: Record<string, string | number>) => string; locale: string; user: { userId: string; tenantId: string; name: string; phone: string; roles: string[] } | null; setView: (v: ViewKey) => void };
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<ParentData | null>(null);
   const [err, setErr] = useState<string | null>(null);

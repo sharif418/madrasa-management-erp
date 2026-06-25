@@ -70,7 +70,7 @@ export async function POST(req: Request) {
     details: { certificateType: ct },
   });
 
-  return new NextResponse(bytes, {
+  return new NextResponse(Buffer.from(bytes), {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",

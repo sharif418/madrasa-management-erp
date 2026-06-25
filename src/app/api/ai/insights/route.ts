@@ -1,10 +1,11 @@
-// AI Insights — auto-generated smart recommendations using z-ai-web-dev-sdk.
+// AI Insights — auto-generated smart recommendations using Google Gemini API.
 // Returns an array of { type, title, description, action? } insights.
 import { NextRequest } from "next/server";
 import { getSession } from "@/lib/session";
 import { ok, fail, unauthorized } from "@/lib/api";
 import { gatherAiContext } from "@/lib/ai-context";
-import ZAI from "z-ai-web-dev-sdk";
+import { jsonCompletion } from "@/lib/gemini";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 type InsightType = "positive" | "warning" | "info";
 type Insight = {
@@ -137,25 +138,25 @@ export async function GET(_req: NextRequest) {
   const session = await getSession();
   if (!session) return unauthorized();
 
+  const retryAfter = checkRateLimit(_req, "api");
+  if (retryAfter !== null) {
+    return fail(`Too many requests. Please try again in ${retryAfter} seconds.`, 429);
+  }
+
   const ctx = await gatherAiContext(session, "bn");
   const ctxJson = JSON.stringify(ctx);
   const prompt = buildInsightsPrompt(ctxJson);
 
   let insights: Insight[] = [];
   try {
-    const zai = await ZAI.create();
-    const response = await zai.chat.completions.create({
-      messages: [
-        { role: "system", content: prompt },
-        { role: "user", content: "Please analyze the madrasa data above and generate 3-5 smart insights in Bengali. Return strictly valid JSON only." },
-      ],
-      thinking: { type: "disabled" },
+    const raw = await jsonCompletion({
+      systemPrompt: prompt,
+      userMessage: "Please analyze the madrasa data above and generate 3-5 smart insights in Bengali. Return strictly valid JSON only.",
     });
-    const raw = response?.choices?.[0]?.message?.content || "";
     insights = parseInsights(raw);
     if (insights.length === 0) insights = fallbackInsights(ctxJson);
   } catch (e) {
-    console.error("[ai/insights] LLM error:", e);
+    console.error("[ai/insights] Gemini error:", e);
     insights = fallbackInsights(ctxJson);
   }
 

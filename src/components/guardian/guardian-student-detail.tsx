@@ -88,7 +88,7 @@ export function GuardianStudentDetail({
 
   if (loading) {
     return (
-      <div dir={dir} className="space-y-4">
+      <div dir={dir()} className="space-y-4">
         <Skeleton className="h-24 rounded-xl" />
         <div className="flex items-center gap-2 text-muted-foreground">
           <Loader2 className="size-4 animate-spin" />
@@ -102,7 +102,7 @@ export function GuardianStudentDetail({
 
   if (error || !data) {
     return (
-      <div dir={dir} className="space-y-4">
+      <div dir={dir()} className="space-y-4">
         <Card className="border-destructive/30 bg-destructive/5">
           <CardContent className="flex items-center gap-3 py-6 text-destructive">
             <AlertCircle className="size-5 shrink-0" />
@@ -116,10 +116,10 @@ export function GuardianStudentDetail({
   const { student, class: klass, attendance: att, hifz, fees, examResults, notices } = data;
 
   return (
-    <div dir={dir} className="space-y-4">
+    <div dir={dir()} className="space-y-4">
       {/* Back button */}
       <Button variant="ghost" size="sm" onClick={onBack} className="w-fit -ml-2">
-        <ArrowLeft className={`size-4 ${dir === "rtl" ? "rotate-180" : ""}`} />
+        <ArrowLeft className={`size-4 ${dir() === "rtl" ? "rotate-180" : ""}`} />
         {t("guardian.backToList")}
       </Button>
 

@@ -94,11 +94,12 @@ async function handleAttendance(
       studentIds.map((id) =>
         db.attendance.upsert({
           where: {
-            tenantId_personId_personType_date: {
+            tenantId_personId_personType_date_session: {
               tenantId: session.tenantId,
               personId: id,
               personType: "student",
               date,
+              session: "full",
             },
           },
           create: {
@@ -107,6 +108,7 @@ async function handleAttendance(
             personType: "student",
             date,
             status,
+            session: "full",
             markedBy: session.userId,
           },
           update: { status, markedBy: session.userId },

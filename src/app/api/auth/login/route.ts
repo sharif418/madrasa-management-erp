@@ -5,9 +5,15 @@ import { verifyPassword } from "@/lib/password";
 import { createSessionToken, setSessionCookie } from "@/lib/session";
 import { recordAudit } from "@/lib/audit";
 import { ok, fail } from "@/lib/api";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
+    const retryAfter = checkRateLimit(req, "auth");
+    if (retryAfter !== null) {
+      return fail(`Too many login attempts. Please try again in ${retryAfter} seconds.`, 429);
+    }
+
     const { phone, password } = await req.json();
     if (!phone || !password) return fail("Phone and password are required");
 

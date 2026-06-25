@@ -13,7 +13,7 @@ import type { useApp, ViewKey } from "@/store/app-store";
 import { SectionCard, EmptyState, StarRow } from "./dashboard-shared";
 import type { StudentData, Slot } from "./student-dashboard";
 
-type T = ReturnType<typeof useApp>["t"];
+type T = (key: string, vars?: Record<string, string | number>) => string;
 
 const GRADE_TINT: Record<string, string> = {
   "A+": "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",

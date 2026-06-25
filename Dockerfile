@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# Multi-stage build for the Madrasa Management ERP (Next.js 16 + Bun + Prisma/SQLite)
+# Multi-stage build for the Madrasa Management ERP (Next.js 16 + Bun + Prisma/PostgreSQL)
 
 # ---------- 1. deps stage ----------
 FROM oven/bun:1.1-alpine AS deps
@@ -32,11 +32,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Prisma client + schema + SQLite db directory
+# Prisma client + schema
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-RUN mkdir -p /app/db && chown -R nextjs:nodejs /app/db
 
 USER nextjs
 EXPOSE 3000

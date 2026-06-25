@@ -1,7 +1,8 @@
 "use client";
 // Shared dashboard primitives used by role-aware dashboards (Teacher/Parent).
 // Keeps each dashboard file under the 300-line limit by extracting common UI.
-import { useMemo, type LucideIcon } from "react";
+import { useMemo } from "react";
+import type { LucideIcon } from "lucide-react";
 import { CalendarDays } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";

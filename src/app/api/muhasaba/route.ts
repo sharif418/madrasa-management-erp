@@ -4,7 +4,7 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
-import { ok, fail, unauthorized, auditAfter } from "@/lib/api";
+import { ok, fail, unauthorized, forbidden, auditAfter } from "@/lib/api";
 
 import { getUserScope, getStudentFilter, canAccessStudent } from "@/lib/scope";
 

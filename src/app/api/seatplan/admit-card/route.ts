@@ -100,7 +100,7 @@ export async function POST(req: Request) {
       entityName: `Admit Cards PDF — ${exam.name} (${cards.length} cards)`,
       details: { examId: exam.id, count: cards.length },
     });
-    return new NextResponse(pdfBytes, {
+    return new NextResponse(Buffer.from(pdfBytes), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",

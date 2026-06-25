@@ -5,9 +5,15 @@ import { hashPassword, slugify } from "@/lib/password";
 import { createSessionToken, setSessionCookie } from "@/lib/session";
 import { recordAudit } from "@/lib/audit";
 import { ok, fail } from "@/lib/api";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
+    const retryAfter = checkRateLimit(req, "signup");
+    if (retryAfter !== null) {
+      return fail(`Too many signup attempts. Please try again in ${retryAfter} seconds.`, 429);
+    }
+
     const { madrasaName, phone, password, language = "bn" } = await req.json();
     if (!madrasaName || !phone || !password) {
       return fail("Madrasa name, phone, and password are required");

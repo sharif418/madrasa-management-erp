@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     };
     await builders[reportType](ctx, tenantId);
     const bytes = await finalizePdf(ctx);
-    return new NextResponse(bytes, {
+    return new NextResponse(Buffer.from(bytes), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",

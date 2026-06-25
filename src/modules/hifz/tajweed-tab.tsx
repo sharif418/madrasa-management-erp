@@ -120,7 +120,7 @@ export function TajweedTab({ students, refreshKey }: Props) {
         </Card>
       ) : (
         <>
-          {data && <TajweedStatsCard stats={data.stats} trend={data.trend} items={items} locale={locale()} />}
+          {data && <TajweedStatsCard stats={data.stats} trend={data.trend} items={items} locale={locale} />}
 
           {/* Assessments table */}
           <Card className="py-4">
@@ -153,7 +153,7 @@ export function TajweedTab({ students, refreshKey }: Props) {
                       <tr key={r.id} className="border-t hover:bg-accent/30">
                         <td className="px-3 py-2 font-medium">{r.studentName}{r.rollNo ? <span className="text-xs text-muted-foreground ms-1">· {r.rollNo}</span> : ""}</td>
                         <td className="px-3 py-2 text-xs text-muted-foreground whitespace-nowrap">
-                          <span className="inline-flex items-center gap-1"><CalendarClock className="size-3" />{fmtDate(r.date, locale())}</span>
+                          <span className="inline-flex items-center gap-1"><CalendarClock className="size-3" />{fmtDate(r.date, locale)}</span>
                         </td>
                         <td className="px-3 py-2 text-xs">{r.surahName} <span className="text-muted-foreground">{r.ayahFrom}-{r.ayahTo}</span></td>
                         {CATEGORY_COLORS.map((c) => (

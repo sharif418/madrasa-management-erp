@@ -1,6 +1,7 @@
 // Tenant context — set on every API request based on authenticated user
 // Enables row-level tenancy isolation across the entire app.
 import { db } from "@/lib/db";
+import { cacheGet, cacheSet } from "@/lib/cache";
 
 export type SessionUser = {
   userId: string;
@@ -28,13 +29,16 @@ import { cookies } from "next/headers";
 const SESSION_COOKIE = "mm_session";
 const TOKEN_SEP = "::";
 
-// Simple signed token: base64(userId::tenantId::phone::expires::hmac)
-// For production, replace with NextAuth JWT or similar.
-const SECRET = process.env.MM_SECRET || "madrasa-manager-dev-secret-change-in-prod";
+// Production HMAC-SHA256 signed session token: base64(userId::tenantId::phone::expires::hmac)
+const SECRET = process.env.MM_SECRET;
+if (!SECRET && process.env.NODE_ENV === "production") {
+  throw new Error("MM_SECRET environment variable is required in production. Generate with: openssl rand -hex 32");
+}
+const SIGNING_SECRET = SECRET || "madrasa-manager-dev-secret-change-in-prod";
 
 async function hmac(data: string): Promise<string> {
   const { createHmac } = await import("crypto");
-  return createHmac("sha256", SECRET).update(data).digest("hex");
+  return createHmac("sha256", SIGNING_SECRET).update(data).digest("hex");
 }
 
 export async function createSessionToken(user: SessionUser): Promise<string> {
@@ -57,6 +61,13 @@ export async function verifySessionToken(token: string): Promise<SessionUser | n
     const expectedSig = await hmac(payload);
     if (sig !== expectedSig) return null;
 
+    // Check session cache to avoid DB query on every request
+    const cacheKey = `session:${userId}`;
+    const cached = cacheGet<SessionUser>(cacheKey);
+    if (cached && cached.tenantId === tenantId && cached.phone === phone) {
+      return cached;
+    }
+
     // Fetch user to verify still active & get name + roles
     const user = await db.user.findUnique({
       where: { id: userId },
@@ -65,13 +76,29 @@ export async function verifySessionToken(token: string): Promise<SessionUser | n
     if (!user || !user.isActive || user.tenantId !== tenantId || user.phone !== phone) {
       return null;
     }
-    return {
+    const sessionUser: SessionUser = {
       userId: user.id,
       tenantId: user.tenantId,
       name: user.name,
       phone: user.phone,
       roles: user.roles.map((r) => r.role.name),
     };
+
+    // Cache verified session for 60 seconds
+    cacheSet(cacheKey, sessionUser, 60 * 1000);
+
+    // Sliding refresh: auto-renew if less than 2 days remain
+    const remainingMs = expires - Date.now();
+    if (remainingMs < 2 * 24 * 60 * 60 * 1000 && remainingMs > 0) {
+      try {
+        const newToken = await createSessionToken(sessionUser);
+        await setSessionCookie(newToken);
+      } catch {
+        // Non-critical — token renewal failure shouldn't block the request
+      }
+    }
+
+    return sessionUser;
   } catch {
     return null;
   }

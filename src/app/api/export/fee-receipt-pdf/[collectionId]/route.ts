@@ -132,7 +132,7 @@ export async function GET(
 
   pdf.y = y;
   const bytes = await finalizePdf(pdf);
-  return new NextResponse(bytes, {
+  return new NextResponse(Buffer.from(bytes), {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",

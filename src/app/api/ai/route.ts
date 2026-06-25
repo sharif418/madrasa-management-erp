@@ -1,10 +1,11 @@
-// AI Assistant — context-aware chat using z-ai-web-dev-sdk.
+// AI Assistant — context-aware chat using Google Gemini API.
 // Server-side only. Returns reply + a small context snapshot for UI display.
 import { NextRequest } from "next/server";
 import { getSession } from "@/lib/session";
 import { ok, fail, unauthorized } from "@/lib/api";
 import { gatherAiContext, type AiContext } from "@/lib/ai-context";
-import ZAI from "z-ai-web-dev-sdk";
+import { chatCompletion } from "@/lib/gemini";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 // Detect language from the user's message; default Bengali.
 function detectLang(msg: string): "bn" | "en" | "ar" {
@@ -49,6 +50,11 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return unauthorized();
 
+  const retryAfter = checkRateLimit(req, "api");
+  if (retryAfter !== null) {
+    return fail(`Too many requests. Please try again in ${retryAfter} seconds.`, 429);
+  }
+
   const body = (await req.json().catch(() => ({}))) as { message?: string; conversationId?: string };
   const message = (body.message || "").trim();
   if (!message) return fail("Message is required");
@@ -60,20 +66,15 @@ export async function POST(req: NextRequest) {
 
   let reply: string;
   try {
-    const zai = await ZAI.create();
-    const response = await zai.chat.completions.create({
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: message },
-      ],
-      thinking: { type: "disabled" },
+    reply = await chatCompletion({
+      systemPrompt,
+      userMessage: message,
     });
-    reply = response?.choices?.[0]?.message?.content?.trim() || "";
     if (!reply) {
       return fail("AI returned an empty response. Please try again.", 502);
     }
   } catch (e) {
-    console.error("[ai/chat] LLM error:", e);
+    console.error("[ai/chat] Gemini error:", e);
     return fail("AI service is temporarily unavailable. Please try again.", 502);
   }
 

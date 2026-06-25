@@ -169,7 +169,7 @@ export function RevisionTodayCard({ refreshKey }: Props) {
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <span title={t("hifz.strengthScore")}>★{it.strengthScore}</span>
                             {it.nextRevisionDate && (
-                              <span className="tabular-nums">{new Date(it.nextRevisionDate).toLocaleDateString(locale() === "ar" ? "ar-EG" : locale() === "bn" ? "bn-BD" : "en-GB", { month: "short", day: "numeric" })}</span>
+                              <span className="tabular-nums">{new Date(it.nextRevisionDate).toLocaleDateString(locale === "ar" ? "ar-EG" : locale === "bn" ? "bn-BD" : "en-GB", { month: "short", day: "numeric" })}</span>
                             )}
                           </div>
                         </li>
