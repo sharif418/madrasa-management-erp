@@ -1,20 +1,21 @@
 # ── Stage 1: Dependencies ──────────────────────────────────────────
-FROM node:22-alpine AS deps
+FROM oven/bun:1-alpine AS deps
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json* ./
+# Copy package + lock files
+COPY package.json bun.lock ./
 
 # Install dependencies
-RUN npm ci --ignore-scripts
-# Generate Prisma client (needs schema)
+RUN bun install --frozen-lockfile --ignore-scripts
+
+# Generate Prisma client
 COPY prisma ./prisma/
-RUN npx prisma generate
+RUN bunx prisma generate
 
 # ── Stage 2: Build ─────────────────────────────────────────────────
-FROM node:22-alpine AS builder
-RUN apk add --no-cache libc6-compat openssl
+FROM oven/bun:1-alpine AS builder
+RUN apk add --no-cache libc6-compat openssl nodejs
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
@@ -23,7 +24,7 @@ COPY . ./
 # Build the Next.js app (standalone output)
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
-RUN npm run build
+RUN bun run build
 
 # ── Stage 3: Production runner ─────────────────────────────────────
 FROM node:22-alpine AS runner
