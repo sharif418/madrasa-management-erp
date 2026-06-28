@@ -22,6 +22,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . ./
 
 # Build the Next.js app (standalone output)
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 RUN bun run build
