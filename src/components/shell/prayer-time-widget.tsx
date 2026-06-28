@@ -1,6 +1,7 @@
 "use client";
 // PrayerTimeWidget — header pill showing next prayer + countdown.
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { Moon, Compass } from "lucide-react";
 import { useApp } from "@/store/app-store";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
@@ -28,7 +29,8 @@ function fmtCountdown(ms: number): string {
 }
 
 export function PrayerTimeWidget() {
-  const { t, setView, locale } = useApp();
+  const { t, locale } = useApp();
+  const router = useRouter();
   const [resp, setResp] = React.useState<Resp | null>(null);
   const [, setTick] = React.useState(0);
 
@@ -55,7 +57,7 @@ export function PrayerTimeWidget() {
   if (!resp || !resp.available) {
     return (
       <button
-        onClick={() => setView("settings")}
+        onClick={() => router.push("/settings")}
         className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50/60 px-2.5 py-1 text-[11px] font-medium text-amber-700 hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300"
         title={resp?.message || t("prayer.setLocation")}
       >

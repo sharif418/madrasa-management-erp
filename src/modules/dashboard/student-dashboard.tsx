@@ -1,6 +1,7 @@
 "use client";
 // Student dashboard — role-aware view for users with the "Student" role.
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -39,7 +40,8 @@ export type StudentData = {
 };
 
 export function StudentDashboard() {
-  const { t, locale, user, setView } = useApp();
+  const { t, locale, user } = useApp();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<StudentData | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -132,7 +134,7 @@ export function StudentDashboard() {
             <h3 className="mb-3 text-sm font-semibold">{t("dashboard.quickActions")}</h3>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {quickActions.map((a) => (
-                <Button key={a.label} variant="outline" onClick={() => setView(a.view)}
+                <Button key={a.label} variant="outline" onClick={() => router.push(`/${a.view}`)}
                   className="group h-auto justify-start gap-3 rounded-xl py-3 text-start transition-all hover:shadow-md hover:-translate-y-0.5">
                   <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${a.tint} transition-transform group-hover:scale-110`}>
                     <a.icon className="size-4" />
@@ -146,7 +148,7 @@ export function StudentDashboard() {
             </div>
           </div>
 
-          <StudentSections data={data} locale={locale} t={t} setView={setView} />
+          <StudentSections data={data} locale={locale} t={t} setView={(v) => router.push(`/${v}`)} />
         </>
       )}
     </div>

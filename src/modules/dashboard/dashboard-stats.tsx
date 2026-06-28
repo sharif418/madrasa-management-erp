@@ -2,6 +2,7 @@
 // Dashboard stat cards + quick actions
 // (Task 33): animated number counter (count-up on mount) + trend indicator visual.
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -114,7 +115,8 @@ export function DashboardStats({
     hifz30d: number;
   };
 }) {
-  const { t, setView } = useApp();
+  const { t } = useApp();
+  const router = useRouter();
 
   if (loading || !data) {
     return (
@@ -175,7 +177,7 @@ export function DashboardStats({
             <Button
               key={a.label}
               variant="outline"
-              onClick={() => setView(a.view)}
+              onClick={() => router.push(`/${a.view}`)}
               className="group h-auto justify-start gap-3 rounded-xl py-3 text-start transition-all hover:shadow-md hover:-translate-y-0.5"
             >
               <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${a.tint} transition-transform group-hover:scale-110`}>

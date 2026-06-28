@@ -1,6 +1,7 @@
 "use client";
 // Teacher dashboard — role-aware view for users with the "Teacher" role.
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -108,7 +109,7 @@ function ScheduleTimeline({ slots, locale, t }: { slots: Slot[]; locale: string;
   );
 }
 
-function QuickActions({ t, setView }: { t: (k: string) => string; setView: (v: ViewKey) => void }) {
+function QuickActions({ t, navigate }: { t: (k: string) => string; navigate: (v: string) => void }) {
   const actions: { label: string; icon: LucideIcon; view: ViewKey; tint: string }[] = [
     { label: "dashboard.logHifz", icon: NotebookPen, view: "hifz", tint: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300" },
     { label: "dashboard.enterResults", icon: FileBarChart, view: "exams", tint: "bg-violet-100 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300" },
@@ -118,7 +119,7 @@ function QuickActions({ t, setView }: { t: (k: string) => string; setView: (v: V
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       {actions.map((a) => (
-        <Button key={a.label} variant="outline" onClick={() => setView(a.view)}
+        <Button key={a.label} variant="outline" onClick={() => navigate(`/${a.view}`)}
           className="group h-auto justify-start gap-3 rounded-xl py-3 text-start transition-all hover:shadow-md hover:-translate-y-0.5">
           <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${a.tint} transition-transform group-hover:scale-110`}>
             <a.icon className="size-4" />
@@ -134,7 +135,8 @@ function QuickActions({ t, setView }: { t: (k: string) => string; setView: (v: V
 }
 
 export function TeacherDashboard() {
-  const { t, locale, user, setView } = useApp();
+  const { t, locale, user } = useApp();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<TeacherData | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -205,7 +207,7 @@ export function TeacherDashboard() {
       {/* Quick actions */}
       <div className="rounded-xl border bg-card p-4 md:p-5">
         <h3 className="mb-3 text-sm font-semibold">{t("dashboard.quickActions")}</h3>
-        <QuickActions t={t} setView={setView} />
+        <QuickActions t={t} navigate={(path) => router.push(path)} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -242,7 +244,7 @@ export function TeacherDashboard() {
 
         {/* My classes */}
         <SectionCard title={t("dashboard.myClasses")} icon={BookOpen} iconTint="bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
-          action={<Button variant="ghost" size="sm" onClick={() => setView("academic")} className="text-xs">{t("common.view")}<ChevronRight className="size-3.5 rtl:rotate-180" /></Button>}>
+          action={<Button variant="ghost" size="sm" onClick={() => router.push("/academic")} className="text-xs">{t("common.view")}<ChevronRight className="size-3.5 rtl:rotate-180" /></Button>}>
           {!data || data.myClasses.length === 0 ? (
             <EmptyState icon={BookOpen} title={t("dashboard.noClasses")} desc={t("dashboard.noClassesDesc")} />
           ) : (
@@ -250,7 +252,7 @@ export function TeacherDashboard() {
               {data.myClasses.map((c) => {
                 const pct = c.capacity > 0 ? Math.min(100, Math.round((c.studentCount / c.capacity) * 100)) : 0;
                 return (
-                  <button key={c.id} onClick={() => setView("academic")} className="group rounded-xl border bg-card/50 p-3 text-start transition-all hover:-translate-y-0.5 hover:shadow-md">
+                  <button key={c.id} onClick={() => router.push("/academic")} className="group rounded-xl border bg-card/50 p-3 text-start transition-all hover:-translate-y-0.5 hover:shadow-md">
                     <div className="flex items-center justify-between gap-2">
                       <p className="truncate text-sm font-semibold">{c.name}</p>
                       <Badge variant="outline" className="shrink-0 capitalize">{c.curriculum}</Badge>
@@ -271,7 +273,7 @@ export function TeacherDashboard() {
 
         {/* Upcoming exams */}
         <SectionCard title={t("dashboard.upcomingExams")} icon={ClipboardList} iconTint="bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
-          action={<Button variant="ghost" size="sm" onClick={() => setView("exams")} className="text-xs">{t("common.view")}<ChevronRight className="size-3.5 rtl:rotate-180" /></Button>}>
+          action={<Button variant="ghost" size="sm" onClick={() => router.push("/exams")} className="text-xs">{t("common.view")}<ChevronRight className="size-3.5 rtl:rotate-180" /></Button>}>
           {!data || data.myExams.length === 0 ? (
             <EmptyState icon={ClipboardList} title={t("dashboard.noExams")} />
           ) : (

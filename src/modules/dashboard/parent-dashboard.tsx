@@ -1,6 +1,7 @@
 "use client";
 // Parent dashboard — role-aware view for users with the "Parent" role.
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -48,7 +49,7 @@ function initials(name: string): string {
   return name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase() || "?";
 }
 
-function ChildCard({ child, locale, t, setView }: { child: Child; locale: string; t: (k: string) => string; setView: (v: ViewKey) => void }) {
+function ChildCard({ child, locale, t, navigate }: { child: Child; locale: string; t: (k: string) => string; navigate: (path: string) => void }) {
   const paid = child.feeStatus.outstanding <= 0;
   const attendanceTint = child.attendanceRate >= 80 ? "text-emerald-600" : child.attendanceRate >= 50 ? "text-amber-600" : "text-rose-600";
   return (
@@ -93,14 +94,14 @@ function ChildCard({ child, locale, t, setView }: { child: Child; locale: string
 
         {/* Attendance + Fees row */}
         <div className="grid grid-cols-2 gap-3">
-          <button onClick={() => setView("attendance")} className="rounded-xl border bg-card/50 p-3 text-start transition-colors hover:bg-accent/50">
+          <button onClick={() => navigate("/attendance")} className="rounded-xl border bg-card/50 p-3 text-start transition-colors hover:bg-accent/50">
             <div className="flex items-center justify-between">
               <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground"><CalendarCheck className="size-3.5" />{t("dashboard.attendanceRate")}</span>
             </div>
             <p className={`mt-1 text-2xl font-bold tabular-nums ${attendanceTint}`}>{child.attendanceRate}%</p>
             <p className="text-xs text-muted-foreground">last 30 days</p>
           </button>
-          <button onClick={() => setView("finance")} className="rounded-xl border bg-card/50 p-3 text-start transition-colors hover:bg-accent/50">
+          <button onClick={() => navigate("/finance")} className="rounded-xl border bg-card/50 p-3 text-start transition-colors hover:bg-accent/50">
             <div className="flex items-center justify-between">
               <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground"><Wallet className="size-3.5" />{t("dashboard.outstandingFees")}</span>
             </div>
@@ -138,7 +139,8 @@ function ChildCard({ child, locale, t, setView }: { child: Child; locale: string
 }
 
 export function ParentDashboard() {
-  const { t, locale, user, setView } = useApp() as { t: (key: string, params?: Record<string, string | number>) => string; locale: string; user: { userId: string; tenantId: string; name: string; phone: string; roles: string[] } | null; setView: (v: ViewKey) => void };
+  const { t, locale, user } = useApp();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<ParentData | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -210,7 +212,7 @@ export function ParentDashboard() {
         <h3 className="mb-3 text-sm font-semibold">{t("dashboard.quickActions")}</h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {quickActions.map((a) => (
-            <Button key={a.label} variant="outline" onClick={() => setView(a.view)}
+            <Button key={a.label} variant="outline" onClick={() => router.push(`/${a.view}`)}
               className="group h-auto justify-start gap-3 rounded-xl py-3 text-start transition-all hover:shadow-md hover:-translate-y-0.5">
               <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${a.tint} transition-transform group-hover:scale-110`}>
                 <a.icon className="size-4" />
@@ -231,7 +233,7 @@ export function ParentDashboard() {
         ) : (
           <ScrollArea className="max-h-[40rem] pe-3">
             <div className="grid gap-4 lg:grid-cols-2">
-              {data.children.map((c) => <ChildCard key={c.id} child={c} locale={locale} t={t} setView={setView} />)}
+              {data.children.map((c) => <ChildCard key={c.id} child={c} locale={locale} t={t} navigate={(path) => router.push(path)} />)}
             </div>
           </ScrollArea>
         )}

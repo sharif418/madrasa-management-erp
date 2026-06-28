@@ -2,6 +2,7 @@
 // NotificationBell — header bell icon with dropdown showing recent notifications + upcoming events.
 // Fetches /api/notifications on mount + every 60s. Marks all read via POST /api/notifications/read.
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import {
   Bell, CalendarClock, Megaphone, MessageSquare, Users, CheckCheck, Inbox, Loader2,
 } from "lucide-react";
@@ -42,7 +43,8 @@ function channelTint(n: NotifItem) {
 }
 
 export function NotificationBell() {
-  const { t, dir, setView } = useApp();
+  const { t, dir } = useApp();
+  const router = useRouter();
   const [items, setItems] = React.useState<NotifItem[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [open, setOpen] = React.useState(false);
@@ -165,7 +167,7 @@ export function NotificationBell() {
             variant="ghost"
             size="sm"
             className="w-full justify-center text-xs font-medium text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
-            onClick={() => { setOpen(false); setView("notices"); }}
+            onClick={() => { setOpen(false); router.push("/notices"); }}
           >
             {t("notifications.viewAll")}
           </Button>
