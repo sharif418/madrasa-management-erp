@@ -42,12 +42,10 @@ RUN addgroup --system --gid 1001 nodejs && \
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
-
-# Copy prisma for db push at runtime
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/start.sh ./start.sh
 
 # Set correct ownership
 RUN chown -R nextjs:nodejs /app
@@ -58,5 +56,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Push schema to DB then start server
-CMD ["sh", "-c", "node node_modules/prisma/build/index.js db push --accept-data-loss --skip-generate 2>&1; node server.js"]
+CMD ["./start.sh"]
