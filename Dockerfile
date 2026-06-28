@@ -24,6 +24,8 @@ COPY . ./
 # Build the Next.js app (standalone output)
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
+ARG MM_SECRET
+ENV MM_SECRET=$MM_SECRET
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 RUN bun run build
